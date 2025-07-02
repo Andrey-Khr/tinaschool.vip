@@ -116,6 +116,7 @@ app.post('/server-callback', (req, res) => {
             signature: responseSignature
         });
     } catch (err) {
+        console.error('Callback error:', err);
         res.status(500).send('Server error');
     }
 });
