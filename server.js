@@ -61,11 +61,28 @@ app.all('/public/status.html', (req, res) => {
 
 // Створення платежу
 app.post('/create-payment', (req, res) => {
-    const { name, email } = req.body;
+    const { name, email, course } = req.body;
 
-    const course = {
-        name: 'Англійська з нуля за 30 днів',
-        price: '2', // Тестова ціна
+    const courses = {
+        starter: {
+            name: 'Англійська з нуля за 30 днів',
+            price: '1500'
+        },
+        intensive: {
+            name: 'Інтенсив 7 днів',
+            price: '500'
+        }
+    };
+
+    const selected = courses[course];
+
+    if (!selected) {
+        return res.status(400).send('Курс не знайдено');
+    }
+
+    const courseData = {
+        name: selected.name,
+        price: selected.price,
         currency: 'UAH',
         orderId: `COURSE_${Date.now()}`
     };
@@ -75,13 +92,13 @@ app.post('/create-payment', (req, res) => {
     const stringToSign = [
         MERCHANT_ACCOUNT,
         MERCHANT_DOMAIN_NAME,
-        course.orderId,
+        courseData.orderId,
         orderDate,
-        course.price,
-        course.currency,
-        course.name,
+        courseData.price,
+        courseData.currency,
+        courseData.name,
         '1',
-        course.price
+        courseData.price
     ].join(';');
 
     const merchantSignature = crypto
@@ -89,23 +106,23 @@ app.post('/create-payment', (req, res) => {
         .update(stringToSign)
         .digest('hex');
 
-    paymentStatuses[course.orderId] = { status: 'pending' };
+    paymentStatuses[courseData.orderId] = { status: 'pending' };
 
     const baseUrl = `${req.protocol}://${req.get('host')}`;
 
     res.render('redirect', {
         merchantAccount: MERCHANT_ACCOUNT,
         merchantDomainName: MERCHANT_DOMAIN_NAME,
-        orderId: course.orderId,
+        orderId: courseData.orderId,
         orderDate,
-        amount: course.price,
-        currency: course.currency,
-        courseName: course.name,
+        amount: courseData.price,
+        currency: courseData.currency,
+        courseName: courseData.name,
         clientName: name,
         clientEmail: email,
         serviceUrl: `${baseUrl}/server-callback`,
-        returnUrl: `${baseUrl}/public/status.html?order_id=${course.orderId}`,
-        failUrl: `${baseUrl}/public/status.html?order_id=${course.orderId}`,
+        returnUrl: `${baseUrl}/public/status.html?order_id=${courseData.orderId}`,
+        failUrl: `${baseUrl}/public/status.html?order_id=${courseData.orderId}`,
         signature: merchantSignature
     });
 });

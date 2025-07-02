@@ -49,14 +49,20 @@
             <p class="price">1500 грн</p>
             <p>Тривалість: 30 днів</p>
 
-            <form action="/create-payment" method="POST">
+            <<form action="/create-payment" method="POST">
                 <label for="name">Ваше ім'я</label>
                 <input type="text" id="name" name="name" required>
 
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" required value="test@example.com">
+                <input type="email" id="email" name="email" required>
 
-                <button type="submit">Оплатити курс через Wayforpay</button>
+                <label for="course">Оберіть курс</label>
+                <select name="course" id="course" required>
+                    <option value="starter">Англійська з нуля за 30 днів — 1500 грн</option>
+                    <option value="intensive">Інтенсив 7 днів — 500 грн</option>
+                </select>
+
+                <button type="submit">Оплатити курс через WayforPay</button>
             </form>
         </div>
     </section>
