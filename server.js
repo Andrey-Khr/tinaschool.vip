@@ -28,8 +28,9 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Сторінка перевірки статусу — для будь-якого методу (GET/POST)
 app.all('/public/status.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'status.html'));
+    res.sendFile(path.resolve(__dirname, 'public/status.html'));
 });
 
 // Створення платежу
