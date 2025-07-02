@@ -17,6 +17,16 @@ const MERCHANT_DOMAIN_NAME = process.env.MERCHANT_DOMAIN_NAME;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname))); // Дозволяє віддавати статичні файли (CSS, JS, HTML)
 
+// Якщо Wayforpay надсилає POST на success.html, перенаправляємо на GET
+app.post('/public/success.html', (req, res) => {
+    res.redirect('/public/success.html');
+});
+
+// Аналогічно для failure.html (на випадок POST)
+app.post('/public/failure.html', (req, res) => {
+    res.redirect('/public/failure.html');
+});
+
 // Головний маршрут - віддаємо index.html
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
