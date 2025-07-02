@@ -1,110 +1,78 @@
+
 <!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TinaSchool</title>
-    <link href="/public/styles.css" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>Tina's School</title>
+    <link rel="stylesheet" href="/public/styles.css"">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Montserrat', sans-serif; }
-    </style>
 </head>
-<body class="bg-pastel-gray text-gray-800">
+<body>
 
-    <header class="bg-white shadow-sm sticky top-0 z-50">
-        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-                <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h1a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.8 9.93l.002-.001M16.2 9.93l-.002-.001M12 15.93l.002.001M12 12.93l-.002.001M12 9.93l.002.001M4.93 17.07l-.002.001M19.07 17.07l.002.001M4.93 7.07l-.002-.001M19.07 7.07l.002.001"></path></svg>
-                <span class="text-2xl font-bold text-gray-800">TinaSchool</span>
-            </div>
-            <div>
-                <a href="#pricing" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-300">Почати навчання</a>
-            </div>
-        </nav>
+    <header>
+        <div class="logo">TinaSchool</div>
+        <a href="#pricing" class="cta-button">Почати навчання</a>
     </header>
 
-    <main class="container mx-auto px-6 py-16 md:py-24 text-center">
-        <h1 class="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">Вивчай англійську з нуля <br class="hidden md:block"> за 30 днів</h1>
-        <p class="mt-6 text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">Наш інтенсивний курс розроблений для швидкого занурення в мовне середовище та отримання видимих результатів у найкоротші терміни.</p>
-        
-        <div class="mt-8 flex justify-center space-x-4">
-             <a href="#pricing" class="px-8 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300">Обрати курс</a>
+    <main>
+        <h1>Вивчай англійську з нуля за 30 днів</h1>
+        <p>Наш інтенсивний курс розроблений для швидкого занурення в мовне середовище та отримання видимих результатів у найкоротші терміни.</p>
+        <div class="button-group">
+            <a href="#pricing">Обрати курс</a>
         </div>
     </main>
 
-    <section class="bg-white py-16 md:py-20">
-        <div class="container mx-auto px-6">
-            <h2 class="text-3xl font-bold text-center mb-12">Переваги нашого курсу</h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-light-blue p-8 rounded-xl shadow-sm">
-                    <h3 class="text-xl font-bold mb-2">Гнучкий графік</h3>
-                    <p class="text-gray-700">Навчайтесь у зручний для вас час, з будь-якого пристрою.</p>
-                </div>
-                <div class="bg-light-blue p-8 rounded-xl shadow-sm">
-                    <h3 class="text-xl font-bold mb-2">Досвідчені викладачі</h3>
-                    <p class="text-gray-700">Наші викладачі - носії мови з багаторічним досвідом.</p>
-                </div>
-                <div class="bg-light-blue p-8 rounded-xl shadow-sm">
-                    <h3 class="text-xl font-bold mb-2">Практичний підхід</h3>
-                    <p class="text-gray-700">80% занять - розмовна практика та реальні життєві ситуації.</p>
-                </div>
+    <section class="features">
+        <h2>Переваги нашого курсу</h2>
+        <div class="feature-blocks">
+            <div class="feature">
+                <h3>Гнучкий графік</h3>
+                <p>Навчайтесь у зручний для вас час, з будь-якого пристрою.</p>
+            </div>
+            <div class="feature">
+                <h3>Досвідчені викладачі</h3>
+                <p>Наші викладачі — носії мови з багаторічним досвідом.</p>
+            </div>
+            <div class="feature">
+                <h3>Практичний підхід</h3>
+                <p>80% занять — розмовна практика та реальні життєві ситуації.</p>
             </div>
         </div>
     </section>
 
-    <section id="pricing" class="py-16 md:py-24 bg-pastel-gray">
-        <div class="container mx-auto px-6 flex flex-col items-center">
-            <h2 class="text-3xl font-bold text-center mb-4">Наш курс</h2>
-            <p class="text-gray-600 mb-10 text-center">Все, що потрібно для впевненого старту.</p>
-            
-            <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
-                <div class="text-center">
-                    <h3 class="text-2xl font-bold text-gray-900">Англійська з нуля за 30 днів</h3>
-                    <p class="mt-2 text-gray-500">Тривалість: 30 днів</p>
-                    <div class="my-6">
-                        <span class="text-5xl font-bold">1500</span>
-                        <span class="text-xl text-gray-600">грн</span>
-                    </div>
-                </div>
+    <section id="pricing">
+        <h2>Наш курс</h2>
+        <p>Все, що потрібно для впевненого старту.</p>
 
-                <form action="/create-payment" method="POST" class="mt-6 space-y-4">
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700">Ваше ім'я</label>
-                        <input type="text" id="name" name="name" required
-                               class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition">
-                    </div>
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" id="email" name="email" required value="test@example.com"
-                               class="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition">
-                    </div>
-                    
-                    <button type="submit"
-                            class="w-full mt-4 px-6 py-4 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 text-lg">
-                        Оплатити курс через Wayforpay
-                    </button>
-                </form>
-            </div>
+        <div class="pricing-box">
+            <h3>Англійська з нуля за 30 днів</h3>
+            <p class="price">1500 грн</p>
+            <p>Тривалість: 30 днів</p>
+
+            <form action="/create-payment" method="POST">
+                <label for="name">Ваше ім'я</label>
+                <input type="text" id="name" name="name" required>
+
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required value="test@example.com">
+
+                <button type="submit">Оплатити курс через Wayforpay</button>
+            </form>
         </div>
     </section>
 
-    <footer class="bg-gray-800 text-white">
-        <div class="container mx-auto px-6 py-10 text-center">
-            <p class="text-lg font-semibold">TinaSchool</p>
-            <div class="mt-4 flex justify-center space-x-6">
-                <a href="tel:+380991234567" class="hover:text-blue-400 transition-colors">+380 (99) 123-45-67</a>
-                <a href="mailto:contact@langspace.com" class="hover:text-blue-400 transition-colors">contact@langspace.com</a>
-            </div>
-            <div class="mt-6 flex justify-center space-x-6">
-                <a href="#" class="hover:text-blue-400 transition-colors">Instagram</a>
-                <a href="#" class="hover:text-blue-400 transition-colors">Telegram</a>
-                <a href="#" class="hover:text-blue-400 transition-colors">Facebook</a>
-            </div>
-            <p class="mt-8 text-sm text-gray-400">&copy; 2025 TinaSchool. Всі права захищено.</p>
+    <footer>
+        <p>TinaSchool</p>
+        <div>
+            <a href="tel:+380991234567">+380 (99) 123-45-67</a>
+            <a href="mailto:contact@langspace.com">contact@langspace.com</a>
         </div>
+        <div>
+            <a href="#">Instagram</a>
+            <a href="#">Telegram</a>
+            <a href="#">Facebook</a>
+        </div>
+        <p>&copy; 2025 TinaSchool. Всі права захищено.</p>
     </footer>
 
 </body>
