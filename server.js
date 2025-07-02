@@ -39,7 +39,7 @@ app.post('/create-payment', (req, res) => {
     // Дані курсу
     const course = {
         name: 'Англійська з нуля за 30 днів',
-        price: '2', // Фіктивна ціна
+        price: '1600', // Фіктивна ціна
         currency: 'UAH',
         orderId: `COURSE_${Date.now()}`
     };
