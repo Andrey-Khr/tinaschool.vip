@@ -1,3 +1,7 @@
+// Якщо Wayforpay надсилає POST на status.html, перенаправляємо на GET
+app.post('/public/status.html', (req, res) => {
+    res.redirect('/public/status.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''));
+});
 // server.js
 const express = require('express');
 const bodyParser = require('body-parser');
