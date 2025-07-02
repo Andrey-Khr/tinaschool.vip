@@ -1,21 +1,47 @@
-// server.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const path = require('path');
+const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Підключення шаблонізатора EJS
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-
 // Дані для WayforPay
 const MERCHANT_ACCOUNT = process.env.MERCHANT_ACCOUNT;
 const MERCHANT_SECRET_KEY = process.env.MERCHANT_SECRET_KEY;
 const MERCHANT_DOMAIN_NAME = process.env.MERCHANT_DOMAIN_NAME;
+
+// Email налаштування
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
+function sendSuccessEmail(to, name, courseName) {
+    const mailOptions = {
+        from: `"Tina's School" <${process.env.EMAIL_USER}>`,
+        to,
+        subject: 'Оплата курсу успішна ✔',
+        html: `
+            <h2>Привіт, ${name}!</h2>
+            <p>Дякуємо за оплату курсу <strong>${courseName}</strong>.</p>
+            <p>Найближчим часом ви отримаєте доступ до навчальних матеріалів.</p>
+            <br>
+            <p>З повагою,<br>Tina's School</p>
+        `
+    };
+
+    return transporter.sendMail(mailOptions);
+}
+
+// EJS шаблони
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 const paymentStatuses = {};
 
@@ -23,12 +49,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// Головна сторінка
+// Головна
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Сторінка перевірки статусу — для будь-якого методу (GET/POST)
+// Сторінка перевірки статусу
 app.all('/public/status.html', (req, res) => {
     res.sendFile(path.resolve(__dirname, 'public/status.html'));
 });
@@ -39,7 +65,7 @@ app.post('/create-payment', (req, res) => {
 
     const course = {
         name: 'Англійська з нуля за 30 днів',
-        price: '2', // тестова ціна
+        price: '2', // Тестова ціна
         currency: 'UAH',
         orderId: `COURSE_${Date.now()}`
     };
@@ -65,8 +91,7 @@ app.post('/create-payment', (req, res) => {
 
     paymentStatuses[course.orderId] = { status: 'pending' };
 
-    const protocol = req.protocol;
-    const baseUrl = `${protocol}://${req.get('host')}`;
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
 
     res.render('redirect', {
         merchantAccount: MERCHANT_ACCOUNT,
@@ -86,9 +111,17 @@ app.post('/create-payment', (req, res) => {
 });
 
 // Callback від WayforPay
-app.post('/server-callback', (req, res) => {
+app.post('/server-callback', async (req, res) => {
     try {
-        const { orderReference, status, time, merchantSignature: wfpSignature } = req.body;
+        const {
+            orderReference,
+            status,
+            time,
+            merchantSignature: wfpSignature,
+            clientEmail,
+            clientFirstName,
+            productName
+        } = req.body;
 
         const stringToSign = [orderReference, status, time].join(';');
         const expectedSignature = crypto
@@ -100,7 +133,20 @@ app.post('/server-callback', (req, res) => {
             return res.status(400).send('Invalid signature');
         }
 
-        paymentStatuses[orderReference] = { status };
+        if (status === 'accept') {
+            paymentStatuses[orderReference] = { status };
+
+            // Email розсилка
+            const courseTitle = Array.isArray(productName) ? productName[0] : 'Ваш курс';
+            if (clientEmail && clientFirstName) {
+                try {
+                    await sendSuccessEmail(clientEmail, clientFirstName, courseTitle);
+                    console.log(`✅ Email надіслано: ${clientEmail}`);
+                } catch (err) {
+                    console.error('❌ Email не надіслано:', err);
+                }
+            }
+        }
 
         const responseTime = Math.floor(Date.now() / 1000);
         const responseString = [orderReference, 'accept', responseTime].join(';');
@@ -121,7 +167,7 @@ app.post('/server-callback', (req, res) => {
     }
 });
 
-// Перевірка статусу платежу
+// Перевірка статусу
 app.get('/get-payment-status', (req, res) => {
     const { order_id } = req.query;
     const payment = paymentStatuses[order_id];

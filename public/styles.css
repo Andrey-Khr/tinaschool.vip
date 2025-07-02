@@ -387,63 +387,122 @@ footer a:hover {
         flex-direction: column;
         padding: 15px 20px;
     }
+
     header .logo {
         margin-bottom: 15px;
     }
+
+    main {
+        padding: 60px 15px 40px;
+        text-align: left;
+    }
+
     main h1 {
-        font-size: 38px;
+        font-size: 26px;
+        line-height: 1.3;
+        text-align: left;
     }
+
     main p {
-        font-size: 17px;
+        font-size: 16px;
+        text-align: left;
+        margin-top: 15px;
     }
-    .feature-blocks {
-        flex-direction: column;
-        align-items: center;
+
+    .button-group {
+        justify-content: flex-start;
+        margin-top: 30px;
     }
-    .feature {
-        max-width: 90%;
-        margin-bottom: 20px;
+
+    .button-group a {
+        font-size: 16px;
+        padding: 12px 24px;
     }
-    #pricing h2 {
-        font-size: 36px;
-    }
-    .pricing-box {
-        padding: 30px;
-    }
-    .pricing-box .price {
-        font-size: 42px;
-    }
-    .container-center {
-        padding: 30px;
-    }
-    .container-center h1 {
+
+    .features h2 {
         font-size: 28px;
+        padding: 0 10px;
     }
-    .container-center p {
+
+    .feature-blocks {
+        display: flex;
+        flex-direction: column;     /* 👉 ставимо блоки в стовпчик */
+        align-items: stretch;       /* 👉 блоки на повну ширину */
+        gap: 20px;
+        padding: 0 15px;
+    }
+
+    .feature {
+        width: 100%;
+        max-width: none;
+        box-sizing: border-box;
+    }
+
+    #pricing h2 {
+        font-size: 30px;
+    }
+
+    #pricing > p {
+        font-size: 17px;
+        padding: 0 15px;
+    }
+
+    .pricing-box {
+        padding: 25px;
+        max-width: 100%;
+        margin: 0 15px;
+        box-sizing: border-box;
+    }
+
+    .pricing-box h3 {
+        font-size: 24px;
+    }
+
+    .pricing-box .price {
+        font-size: 32px;
+    }
+
+    .pricing-box input,
+    .pricing-box button {
         font-size: 16px;
+        padding: 14px;
     }
-    .status-icon {
-        font-size: 60px;
+
+    footer {
+        font-size: 15px;
+        padding: 40px 20px;
     }
-    .action-button {
-        font-size: 16px;
-        padding: 12px 25px;
+
+    footer a {
+        display: block;
+        margin: 10px 0;
     }
 }
 
+
 @media (max-width: 480px) {
     main h1 {
-        font-size: 30px;
+        font-size: 24px;
     }
+
     main p {
-        font-size: 16px;
-    }
-    header a.cta-button, .button-group a {
-        padding: 10px 20px;
         font-size: 15px;
     }
-    .pricing-box input, .pricing-box button {
+
+    .feature h3 {
+        font-size: 20px;
+    }
+
+    .feature p {
+        font-size: 15px;
+    }
+
+    .pricing-box {
+        padding: 20px;
+    }
+
+    .pricing-box input,
+    .pricing-box button {
         padding: 12px;
-        font-size: 16px;
     }
 }
