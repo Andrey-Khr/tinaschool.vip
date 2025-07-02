@@ -14,7 +14,11 @@ const MERCHANT_ACCOUNT = process.env.MERCHANT_ACCOUNT;
 const MERCHANT_SECRET_KEY = process.env.MERCHANT_SECRET_KEY;
 const MERCHANT_DOMAIN_NAME = process.env.MERCHANT_DOMAIN_NAME;
 
+// Middleware для обробки даних з форм
 app.use(bodyParser.urlencoded({ extended: true }));
+// Middleware для обробки JSON-даних, які буде надсилати Wayforpay
+app.use(express.json());
+
 app.use(express.static(path.join(__dirname))); // Дозволяє віддавати статичні файли (CSS, JS, HTML)
 
 // Якщо Wayforpay надсилає POST на success.html, перенаправляємо на GET
@@ -39,7 +43,7 @@ app.post('/create-payment', (req, res) => {
     // Дані курсу
     const course = {
         name: 'Англійська з нуля за 30 днів',
-        price: '1600', // Фіктивна ціна
+        price: '1500', // ВАЖЛИВО: Використовуйте реальну ціну
         currency: 'UAH',
         orderId: `COURSE_${Date.now()}`
     };
@@ -93,6 +97,62 @@ app.post('/create-payment', (req, res) => {
             </body>
         </html>
     `);
+});
+
+// ----- НОВИЙ МАРШРУТ -----
+// Обробка Service URL (Server-to-Server Callback) від Wayforpay
+app.post('/server-callback', (req, res) => {
+    try {
+        const { orderReference, status, reason, time, merchantSignature: wfpSignature } = req.body;
+
+        // 1. Створюємо рядок для перевірки підпису
+        const stringToSign = [orderReference, status, time].join(';');
+        const signature = crypto
+            .createHmac('md5', MERCHANT_SECRET_KEY)
+            .update(stringToSign)
+            .digest('hex');
+
+        // 2. Перевіряємо, чи співпадає підпис з тим, що надіслав Wayforpay
+        if (signature !== wfpSignature) {
+            console.error('ПОМИЛКА: Неправильний підпис від Wayforpay.');
+            // Не відповідаємо нічого, щоб уникнути атак
+            return res.status(400).send('Invalid signature');
+        }
+
+        // 3. Перевіряємо статус транзакції
+        if (status === 'accept') {
+            console.log(`Успішна оплата для замовлення ${orderReference}.`);
+            
+            //
+            // ----- ТУТ ВАША БІЗНЕС-ЛОГІКА -----
+            // - Надайте доступ до курсу
+            // - Відправте email-підтвердження користувачу
+            // - Збережіть статус оплати в базу даних
+            //
+            
+        } else {
+            console.log(`Оплата для замовлення ${orderReference} не успішна. Статус: ${status}, причина: ${reason}`);
+        }
+
+        // 4. Відправляємо відповідь для Wayforpay, щоб підтвердити отримання callback
+        const responseTime = Math.floor(Date.now() / 1000);
+        const responseStringToSign = [orderReference, 'accept', responseTime].join(';');
+        const responseSignature = crypto
+            .createHmac('md5', MERCHANT_SECRET_KEY)
+            .update(responseStringToSign)
+            .digest('hex');
+            
+        res.json({
+            orderReference: orderReference,
+            status: 'accept',
+            time: responseTime,
+            signature: responseSignature
+        });
+
+    } catch (error) {
+        console.error('Помилка в обробці callback:', error);
+        res.status(500).send('Server error');
+    }
 });
 
 
