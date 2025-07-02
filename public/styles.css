@@ -381,7 +381,23 @@ footer a:hover {
     box-shadow: 0 6px 15px rgba(255, 140, 0, 0.4);
 }
 
+.course-grid {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+    margin-top: 40px;
+}
+
+
+}
 /* Медіа-запити для адаптивності */
+@media (max-width: 768px) {
+    .course-grid {
+        flex-direction: column;
+        align-items: center;
+    }
+
 @media (max-width: 768px) {
     header {
         flex-direction: column;

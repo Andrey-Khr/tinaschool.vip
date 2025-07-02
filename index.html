@@ -41,31 +41,49 @@
     </section>
 
     <section id="pricing">
-        <h2>Наш курс</h2>
-        <p>Все, що потрібно для впевненого старту.</p>
+    <h2>Наші курси</h2>
+    <p>Оберіть курс, який вам підходить:</p>
 
+    <div class="course-grid">
+        <!-- КУРС 1 -->
         <div class="pricing-box">
-            <h3>Англійська з нуля за 30 днів</h3>
+            <h3>Англійська з нуля</h3>
             <p class="price">1500 грн</p>
             <p>Тривалість: 30 днів</p>
 
-            <<form action="/create-payment" method="POST">
-                <label for="name">Ваше ім'я</label>
-                <input type="text" id="name" name="name" required>
+            <form action="/create-payment" method="POST">
+                <input type="hidden" name="course" value="starter">
 
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
+                <label for="name1">Ваше ім'я</label>
+                <input type="text" id="name1" name="name" required>
 
-                <label for="course">Оберіть курс</label>
-                <select name="course" id="course" required>
-                    <option value="starter">Англійська з нуля за 30 днів — 1500 грн</option>
-                    <option value="intensive">Інтенсив 7 днів — 500 грн</option>
-                </select>
+                <label for="email1">Email</label>
+                <input type="email" id="email1" name="email" required>
 
-                <button type="submit">Оплатити курс через WayforPay</button>
+                <button type="submit">Оплатити</button>
             </form>
         </div>
-    </section>
+
+        <!-- КУРС 2 -->
+        <div class="pricing-box">
+            <h3>Інтенсив 7 днів</h3>
+            <p class="price">500 грн</p>
+            <p>Швидкий старт для бази</p>
+
+            <form action="/create-payment" method="POST">
+                <input type="hidden" name="course" value="intensive">
+
+                <label for="name2">Ваше ім'я</label>
+                <input type="text" id="name2" name="name" required>
+
+                <label for="email2">Email</label>
+                <input type="email" id="email2" name="email" required>
+
+                <button type="submit">Оплатити</button>
+            </form>
+        </div>
+    </div>
+</section>
 
     <footer>
         <p>TinaSchool</p>
