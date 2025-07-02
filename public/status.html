@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Перевірка статусу оплати</title>
+    <link href="/public/styles.css" rel="stylesheet">
+</head>
+<body class="bg-pastel-gray flex items-center justify-center h-screen">
+    <div class="bg-white p-10 rounded-lg shadow-lg text-center">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">Перевіряємо статус вашого платежу...</h1>
+        <p class="text-gray-600">Будь ласка, зачекайте кілька секунд.</p>
+    </div>
+
+    <script>
+        // Функція для отримання параметра з URL
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        async function checkStatus() {
+            const orderId = getQueryParam('order_id');
+            if (!orderId) {
+                // Якщо order_id не знайдено, перенаправляємо на сторінку помилки
+                window.location.href = '/public/failure.html';
+                return;
+            }
+
+            try {
+                // Робимо запит до нашого сервера, щоб отримати реальний статус
+                const response = await fetch(`/get-payment-status?order_id=${orderId}`);
+                const data = await response.json();
+
+                // Перенаправляємо користувача на основі статусу
+                if (data.status === 'accept') {
+                    window.location.href = '/public/success.html';
+                } else {
+                    window.location.href = '/public/failure.html';
+                }
+            } catch (error) {
+                console.error('Помилка перевірки статусу:', error);
+                // Якщо сталася помилка, відправляємо на сторінку з помилкою
+                window.location.href = '/public/failure.html';
+            }
+        }
+
+        // Чекаємо 2 секунди перед перевіркою, щоб Wayforpay встиг надіслати callback
+        setTimeout(checkStatus, 2000);
+    </script>
+</body>
+</html>
