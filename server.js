@@ -1,8 +1,5 @@
 // server.js
 // Якщо Wayforpay надсилає POST на status.html, перенаправляємо на GET
-app.post('/public/status.html', (req, res) => {
-    res.redirect('/public/status.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''));
-});
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
@@ -11,6 +8,11 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Тепер можна безпечно використовувати app
+app.post('/public/status.html', (req, res) => {
+    res.redirect('/public/status.html' + (req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''));
+});
 
 // ----- НАЛАШТУВАННЯ WAYFORPAY -----
 const MERCHANT_ACCOUNT = process.env.MERCHANT_ACCOUNT;
@@ -33,7 +35,7 @@ app.post('/create-payment', (req, res) => {
     const { name, email } = req.body;
     const course = {
         name: 'Англійська з нуля за 30 днів',
-        price: '1500',
+        price: '2',
         currency: 'UAH',
         orderId: `COURSE_${Date.now()}`
     };
