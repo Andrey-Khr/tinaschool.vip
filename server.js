@@ -28,8 +28,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Сторінка перевірки статусу
-app.get('/public/status.html', (req, res) => {
+app.all('/public/status.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'status.html'));
 });
 
