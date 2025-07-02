@@ -63,16 +63,16 @@ app.all('/public/status.html', (req, res) => {
 app.post('/create-payment', (req, res) => {
     const { name, email, course } = req.body;
 
-    const courses = {
-        starter: {
-            name: 'Англійська з нуля за 30 днів',
-            price: '1500'
+        const courses = {
+        solo: {
+            name: 'Курс: Самостійний',
+            price: '1199'
         },
-        intensive: {
-            name: 'Інтенсив 7 днів',
-            price: '500'
+        support: {
+            name: 'Курс з підтримкою',
+            price: '1799'
         }
-    };
+        };
 
     const selected = courses[course];
 

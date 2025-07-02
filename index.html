@@ -41,49 +41,57 @@
     </section>
 
     <section id="pricing">
-    <h2>Наші курси</h2>
-    <p>Оберіть курс, який вам підходить:</p>
+        <h2>Обери свій формат</h2>
+        <p>Кожен тариф — це повний доступ до матеріалів та бонусів.</p>
 
-    <div class="course-grid">
-        <!-- КУРС 1 -->
-        <div class="pricing-box">
-            <h3>Англійська з нуля</h3>
-            <p class="price">1500 грн</p>
-            <p>Тривалість: 30 днів</p>
+        <div class="course-grid">
 
+            <!-- Самостійний тариф -->
+            <div class="pricing-box">
+            <div class="tariff-header">Тариф: <span class="tag-solo">САМОСТІЙНИЙ</span></div>
+            <ul class="course-details">
+                <li>14 базових відеоуроків</li>
+                <li>Доступ до матеріалів 4 місяці</li>
+                <li>11 додаткових PDF матеріалів</li>
+                <li class="cross">Перевірка домашнього завдання</li>
+                <li class="cross">Закритий чат з куратором</li>
+                <li><strong>БОНУС:</strong> “Меню + 10 перевірених рецептів”</li>
+            </ul>
+            <p class="price">1199 грн</p>
             <form action="/create-payment" method="POST">
-                <input type="hidden" name="course" value="starter">
-
-                <label for="name1">Ваше ім'я</label>
-                <input type="text" id="name1" name="name" required>
-
+                <input type="hidden" name="course" value="solo">
+                <label for="name1">Ім’я</label>
+                <input type="text" name="name" id="name1" required>
                 <label for="email1">Email</label>
-                <input type="email" id="email1" name="email" required>
-
-                <button type="submit">Оплатити</button>
+                <input type="email" name="email" id="email1" required>
+                <button type="submit">ПРИДБАТИ КУРС</button>
             </form>
-        </div>
+            </div>
 
-        <!-- КУРС 2 -->
-        <div class="pricing-box">
-            <h3>Інтенсив 7 днів</h3>
-            <p class="price">500 грн</p>
-            <p>Швидкий старт для бази</p>
-
+            <!-- Тариф з підтримкою -->
+            <div class="pricing-box">
+            <div class="tariff-header">Тариф: <span class="tag-support">З ПІДТРИМКОЮ</span></div>
+            <ul class="course-details">
+                <li>14 базових відеоуроків</li>
+                <li>Доступ до матеріалів до кінця 2025</li>
+                <li>11 додаткових PDF матеріалів</li>
+                <li>Перевірка домашнього завдання</li>
+                <li>Закритий чат з куратором</li>
+                <li><strong>БОНУС:</strong> “Меню + 10 перевірених рецептів”</li>
+            </ul>
+            <p class="price">1799 грн</p>
             <form action="/create-payment" method="POST">
-                <input type="hidden" name="course" value="intensive">
-
-                <label for="name2">Ваше ім'я</label>
-                <input type="text" id="name2" name="name" required>
-
+                <input type="hidden" name="course" value="support">
+                <label for="name2">Ім’я</label>
+                <input type="text" name="name" id="name2" required>
                 <label for="email2">Email</label>
-                <input type="email" id="email2" name="email" required>
-
-                <button type="submit">Оплатити</button>
+                <input type="email" name="email" id="email2" required>
+                <button type="submit">ПРИДБАТИ КУРС</button>
             </form>
+            </div>
+
         </div>
-    </div>
-</section>
+    </section>
 
     <footer>
         <p>TinaSchool</p>
