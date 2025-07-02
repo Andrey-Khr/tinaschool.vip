@@ -9,11 +9,10 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ----- НАЛАШТУВАННЯ WAYFORPAY (використовуйте тестові дані) -----
-// В реальному проєкті ці дані потрібно зберігати в змінних середовища (.env файл)
-const MERCHANT_ACCOUNT = 'test_merch_n1';
-const MERCHANT_SECRET_KEY = 'flk3409refn54t54t*FNJRET'; // Тільки для тестування!
-const MERCHANT_DOMAIN_NAME = 'localhost'; // Замініть на ваш домен після деплою
+// ----- НАЛАШТУВАННЯ WAYFORPAY (через .env) -----
+const MERCHANT_ACCOUNT = process.env.MERCHANT_ACCOUNT;
+const MERCHANT_SECRET_KEY = process.env.MERCHANT_SECRET_KEY;
+const MERCHANT_DOMAIN_NAME = process.env.MERCHANT_DOMAIN_NAME;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname))); // Дозволяє віддавати статичні файли (CSS, JS, HTML)
@@ -75,6 +74,7 @@ app.post('/create-payment', (req, res) => {
                     <input type="hidden" name="clientEmail" value="${email}">
                     <input type="hidden" name="serviceUrl" value="http://${req.get('host')}/server-callback"> 
                     <input type="hidden" name="returnUrl" value="http://${req.get('host')}/public/success.html">
+                    <input type="hidden" name="failUrl" value="http://${req.get('host')}/public/failure.html">
                     <input type="hidden" name="merchantSignature" value="${merchantSignature}">
                 </form>
                 <script type="text/javascript">
