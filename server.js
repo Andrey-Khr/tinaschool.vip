@@ -4,6 +4,8 @@ const crypto = require('crypto');
 const path = require('path');
 const nodemailer = require('nodemailer');
 require('dotenv').config();
+const connectDB = require('./db');
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
