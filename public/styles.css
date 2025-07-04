@@ -674,4 +674,214 @@ footer a:hover {
 /* Плавний скрол */
 html {
     scroll-behavior: smooth;
+    }
+    /*--------------------------------------------------------------------------------------------------*/
+/* --- Стилі для таблиці (оновлено за шаблоном) --- */
+.table-wrapper {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden; /* Важливо для заокруглення кутів таблиці */
+    animation: fadeInUp 1s ease-out; /* Анімація появи з шаблону */
+}
+
+/* Обгортка для скролу на мобільних пристроях */
+.table-scroll-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 16px;
+    color: #2d3436;
+}
+
+th {
+    background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+    color: #fff;
+    font-weight: 600;
+    padding: 16px 20px;
+    text-align: left;
+    font-size: 17px;
+    border-bottom: 3px solid #6c5ce7;
+}
+
+td {
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(211, 211, 211, 0.5); /* #ddd з прозорістю */
+}
+
+tbody tr {
+    transition: background-color 0.3s ease;
+}
+
+tbody tr:hover {
+    background-color: rgba(253, 203, 110, 0.3); /* Використовуємо колір з фону шаблону */
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- Стилі для форми (оновлено за шаблоном) --- */
+.form-container {
+    max-width: 700px;
+    margin: 50px auto;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 25px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
+    animation: fadeInUp 1s ease-out;
+}
+
+.form-container h2 {
+    font-size: 32px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 30px;
+    background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+    position: relative;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #2d3436;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 16px;
+    border-radius: 15px;
+    border: 2px solid rgba(108, 92, 231, 0.3);
+    background: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    font-family: 'Poppins', sans-serif;
+    color: #2d3436;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #6c5ce7;
+    box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.15);
+    transform: translateY(-2px);
+}
+
+button.submit-btn {
+    width: 100%;
+    padding: 18px;
+    margin-top: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    background: linear-gradient(45deg, #e17055, #fd79a8); /* Акцентний градієнт з шаблону */
+    color: white;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 6px 20px rgba(225, 112, 85, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+button.submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s ease;
+}
+
+button.submit-btn:hover::before {
+    left: 100%;
+}
+
+button.submit-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(225, 112, 85, 0.4);
+}
+/***********************************************************************************/
+/* --- Додаткові стилі для покращення дизайну --- */
+
+/* 1. Стилі для бейджів статусу */
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+
+.status-paid {
+    background: linear-gradient(45deg, #2ed573, #1dd1a1); /* Яскравий зелений */
+    box-shadow: 0 4px 10px rgba(46, 213, 115, 0.3);
+}
+
+.status-pending {
+    background: linear-gradient(45deg, #ff9f43, #ffb142); /* Теплий помаранчевий */
+    box-shadow: 0 4px 10px rgba(255, 159, 67, 0.3);
+}
+
+/* 2. Стилі для полів вводу з іконками */
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon .input-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #a29bfe; /* Колір іконки в тон дизайну */
+    font-size: 16px;
+    transition: color 0.3s ease;
+}
+
+/* Зміщуємо текст вправо, щоб не накладався на іконку */
+.input-with-icon input,
+.input-with-icon select {
+    padding-left: 45px;
+}
+
+.form-group:focus-within .input-icon {
+    color: #6c5ce7; /* Зміна кольору іконки при фокусі */
+}
+
+/* 3. Покращення для кнопок та посилань */
+th i, .action-links i, .submit-btn i {
+    margin-right: 8px; /* Відступ для іконок */
+}
+
+/* 4. Покращення для таблиці */
+tbody tr:hover {
+    transform: translateY(-3px) scale(1.01); /* Більш плавний ефект підняття */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.07);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }

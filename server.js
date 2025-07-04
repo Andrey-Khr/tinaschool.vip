@@ -2,48 +2,14 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const path = require('path');
-const nodemailer = require('nodemailer');
 require('dotenv').config();
-const connectDB = require('./db');
-connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Дані для WayforPay
 const MERCHANT_ACCOUNT = process.env.MERCHANT_ACCOUNT;
 const MERCHANT_SECRET_KEY = process.env.MERCHANT_SECRET_KEY;
 const MERCHANT_DOMAIN_NAME = process.env.MERCHANT_DOMAIN_NAME;
-
-// Email налаштування
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
-
-function sendSuccessEmail(to, name, courseName) {
-    const mailOptions = {
-        from: `"Tina's School" <${process.env.EMAIL_USER}>`,
-        to,
-        subject: 'Оплата курсу успішна ✔',
-        html: `
-            <h2>Привіт, ${name}!</h2>
-            <p>Дякуємо за оплату курсу <strong>${courseName}</strong>.</p>
-            <p>Найближчим часом ви отримаєте доступ до навчальних матеріалів.</p>
-            <br>
-            <p>З повагою,<br>Tina's School</p>
-        `
-    };
-
-    return transporter.sendMail(mailOptions);
-}
-
-// EJS шаблони
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
 
 const paymentStatuses = {};
 
@@ -51,21 +17,21 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// Головна
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Сторінка перевірки статусу
 app.all('/public/status.html', (req, res) => {
     res.sendFile(path.resolve(__dirname, 'public/status.html'));
 });
 
-// Створення платежу
-app.post('/create-payment', (req, res) => {
+app.post('/create-payment', async (req, res) => {
     const { name, email, course } = req.body;
 
-        const courses = {
+    const courses = {
         solo: {
             name: 'Курс: Самостійний',
             price: '1199'
@@ -74,7 +40,7 @@ app.post('/create-payment', (req, res) => {
             name: 'Курс з підтримкою',
             price: '1799'
         }
-        };
+    };
 
     const selected = courses[course];
 
@@ -129,17 +95,13 @@ app.post('/create-payment', (req, res) => {
     });
 });
 
-// Callback від WayforPay
 app.post('/server-callback', async (req, res) => {
     try {
         const {
             orderReference,
             status,
             time,
-            merchantSignature: wfpSignature,
-            clientEmail,
-            clientFirstName,
-            productName
+            merchantSignature: wfpSignature
         } = req.body;
 
         const stringToSign = [orderReference, status, time].join(';');
@@ -153,18 +115,8 @@ app.post('/server-callback', async (req, res) => {
         }
 
         if (status === 'accept') {
-            paymentStatuses[orderReference] = { status };
-
-            // Email розсилка
-            const courseTitle = Array.isArray(productName) ? productName[0] : 'Ваш курс';
-            if (clientEmail && clientFirstName) {
-                try {
-                    await sendSuccessEmail(clientEmail, clientFirstName, courseTitle);
-                    console.log(`✅ Email надіслано: ${clientEmail}`);
-                } catch (err) {
-                    console.error('❌ Email не надіслано:', err);
-                }
-            }
+            // Тут можна зберегти статус, якщо буде потрібно в майбутньому
+            paymentStatuses[orderReference] = { status: 'paid' };
         }
 
         const responseTime = Math.floor(Date.now() / 1000);
@@ -183,18 +135,6 @@ app.post('/server-callback', async (req, res) => {
     } catch (err) {
         console.error('Callback error:', err);
         res.status(500).send('Server error');
-    }
-});
-
-// Перевірка статусу
-app.get('/get-payment-status', (req, res) => {
-    const { order_id } = req.query;
-    const payment = paymentStatuses[order_id];
-
-    if (payment) {
-        res.json({ status: payment.status });
-    } else {
-        res.status(404).json({ status: 'not_found' });
     }
 });
 

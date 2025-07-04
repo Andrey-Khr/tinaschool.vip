@@ -5,10 +5,9 @@
     <title>Перевірка статусу оплати</title>
     <link href="/public/styles.css" rel="stylesheet">
 </head>
-<body class="bg-pastel-gray flex items-center justify-center h-screen">
-    <div class="bg-white p-10 rounded-lg shadow-lg text-center">
-        <h1 class="text-2xl font-bold text-gray-800 mb-4">Перевіряємо статус вашого платежу...</h1>
-        <p class="text-gray-600">Будь ласка, зачекайте кілька секунд.</p>
+<body>
+    <div class="form-container"> <h2 style="background: linear-gradient(45deg, #6c5ce7, #a29bfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Перевіряємо статус вашого платежу...</h2>
+        <p style="color: #2d3436; font-size: 18px; margin-bottom: 30px;">Будь ласка, зачекайте кілька секунд.</p>
     </div>
 
     <script>
@@ -44,7 +43,7 @@
             }
         }
 
-        // Чекаємо 2 секунди перед перевіркою, щоб Wayforpay встиг надіслати callback
+        // Чекаємо 6 секунд перед перевіркою, щоб Wayforpay встиг надіслати callback
         setTimeout(checkStatus, 6000);
     </script>
 </body>
