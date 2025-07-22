@@ -56,6 +56,8 @@ header {
     to { transform: translateY(0); opacity: 1; }
 }
 
+
+
 header .logo {
     font-size: 32px;
     font-weight: 800;
@@ -294,7 +296,7 @@ main p {
 }
 
 .feature p {
-    font-size: 16px;
+    font-size: 18px;
     color: #555;
     margin-bottom: 0;
     line-height: 1.7;
@@ -592,71 +594,763 @@ footer a:hover {
     color: #fff;
     text-shadow: 0 0 10px rgba(253, 203, 110, 0.5);
 }
+/* ============================================
+   ДОДАТКОВІ СТИЛІ ДЛЯ КУРСУ РУМУНСЬКОЇ МОВИ
+   ============================================ */
+
+/* Секція "Що курс допоможе" */
+.about-course {
+    padding: 100px 20px;
+    background: linear-gradient(135deg, #f8f9ff 0%, #e6e9ff 100%);
+    text-align: center;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.about-course::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 30% 30%, rgba(108, 92, 231, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 70% 70%, rgba(162, 155, 254, 0.1) 0%, transparent 50%);
+    z-index: 1;
+}
+
+.about-course > * {
+    position: relative;
+    z-index: 2;
+}
+
+.about-course h2 {
+    font-size: 48px;
+    background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 60px;
+    font-weight: 800;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.course-benefits {
+      display: flex;
+      justify-content: center; /* по горизонталі */
+      align-items: center; 
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.benefit-item {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 35px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.benefit-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.benefit-item:hover::before {
+    transform: scaleX(1);
+}
+
+.benefit-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+.benefit-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+    border-radius: 50%;
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+}
+
+.benefit-item p {
+    font-size: 16px;
+    color: #2d3436;
+    margin: 0;
+    line-height: 1.6;
+    flex: 1;
+}
+
+.benefit-item em {
+    background: linear-gradient(45deg, #e17055, #fd79a8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-style: normal;
+    font-weight: 600;
+}
+
+/* Секція "Кому підійде" */
+.target-audience {
+    padding: 100px 20px;
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+    text-align: center;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.target-audience::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 25% 75%, rgba(225, 112, 85, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 75% 25%, rgba(253, 121, 168, 0.1) 0%, transparent 50%);
+    z-index: 1;
+}
+
+.target-audience > * {
+    position: relative;
+    z-index: 2;
+}
+
+.target-audience h2 {
+    font-size: 48px;
+    background: linear-gradient(45deg, #e17055, #fd79a8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 60px;
+    font-weight: 800;
+}
+
+.audience-grid {
+    display: flex;            /* Вмикаємо Flexbox */
+    flex-wrap: wrap;          /* Дозволяємо елементам переноситись на новий рядок */
+    justify-content: center;  /* Центруємо елементи по горизонталі */
+    gap: 30px;                /* Задаємо відступ між блоками */
+    max-width: 1200px;
+    margin: 0 auto;
+    justify-content: center; /* ЗМІНА: Додано для кращого центрування */
+}
+
+.audience-item {
+     flex-basis: 280px; /* Базова ширина елемента */
+    flex-grow: 1;      /* Дозволяє елементу рости, щоб заповнити місце */
+    max-width: 380px;  /* Максимальна ширина, щоб не розтягувались занадто сильно */
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.audience-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(45deg, #e17055, #fd79a8);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.audience-item:hover::before {
+    transform: scaleX(1);
+}
+
+.audience-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+.audience-icon {
+    font-size: 40px;
+    margin-bottom: 20px;
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(45deg, #e17055, #fd79a8);
+    border-radius: 50%;
+    margin: 0 auto 25px;
+    box-shadow: 0 6px 20px rgba(225, 112, 85, 0.3);
+}
+
+.audience-item h3 {
+    font-size: 30px; /* ЗМІНА: Збільшено з 24px */
+    background: linear-gradient(45deg, #e17055, #fd79a8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.audience-item p {
+    font-size: 20px; 
+    color: #555;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Секція "Про авторку" */
+.about-author {
+    padding: 100px 20px;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8f2ff 100%);
+    text-align: center;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.about-author::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 50% 50%, rgba(108, 92, 231, 0.05) 0%, transparent 70%);
+    z-index: 1;
+}
+
+.about-author > * {
+    position: relative;
+    z-index: 2;
+}
+
+.about-author h2 {
+    font-size: 48px;
+    background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 40px;
+    font-weight: 800;
+}
+
+.about-author p {
+    font-size: 20px;
+    color: #2d3436;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.7;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.about-author strong {
+    background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+/* Контейнер для логотипа та тексту */
+.logo-wrapper {
+    display: flex;
+    align-items: center; /* Вирівнює логотип та текст по центру по вертикалі */
+    gap: 15px;           /* Додає відступ між зображенням та текстом */
+}
+
+/* Стиль для самого зображення логотипа */
+.logo-image {
+    height: 50px; /* Встановіть висоту логотипа для великих екранів */
+    width: auto;  /* Ширина буде автоматичною для збереження пропорцій */
+}
 
 /* Адаптивність */
 @media (max-width: 768px) {
     header {
         flex-direction: column;
-        padding: 20px;
+        gap: 15px;
+        padding: 15px;
+        min-height: auto;
     }
     
     header .logo {
-        margin-bottom: 15px;
-        font-size: 28px;
+        font-size: 24px;
+    }
+    .logo-image {
+        height: 40px;
     }
     
-    main h1 {
-        font-size: 36px;
+    header a.cta-button {
+        padding: 10px 20px;
+        font-size: 13px;
     }
     
-    main p {
-        font-size: 18px;
-    }
-    
-    .features h2,
-    #pricing h2 {
-        font-size: 36px;
-    }
-    
-    .course-grid {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .pricing-box {
-        padding: 30px;
-        max-width: 100%;
-        margin: 0 15px;
-    }
-    
-    .pricing-box input,
-    .pricing-box button {
-        padding: 16px;
-        font-size: 16px;
-    }
-}
-
-@media (max-width: 480px) {
     main {
-        padding: 80px 15px 60px;
+        padding: 60px 15px 50px;
     }
     
-    main h1 {
-        font-size: 28px;
+    .features {
+        padding: 60px 15px;
     }
     
-    .features,
     #pricing {
         padding: 60px 15px;
     }
     
     .feature-blocks {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .feature {
+        max-width: 100%;
+        min-width: auto;
+        width: 100%;
+        padding: 25px;
+    }
+    
+    .course-grid {
+        flex-direction: column;
+        align-items: center;
         gap: 20px;
     }
     
     .pricing-box {
+        max-width: 100%;
         padding: 25px;
-        margin: 0 10px;
+    }
+    
+    .table-wrapper {
+        margin: 30px 10px;
+        padding: 15px;
+    }
+    
+    .form-container {
+        margin: 30px 10px;
+        padding: 25px;
+    }
+    
+    footer {
+        padding: 40px 15px;
+    }
+    
+    footer a {
+        margin: 5px;
+        display: block;
+    }
+}
+
+/* Розширений адаптив для мобільних пристроїв 480px і менше */
+@media (max-width: 480px) {
+    /* Загальні стилі */
+    body {
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    /* Заголовок */
+    header {
+        padding: 12px 15px;
+        flex-direction: column;
+        gap: 12px;
+        position: relative;
+    }
+    
+    header .logo {
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+    .logo-image {
+        height: 20px;
+    }
+    
+    header a.cta-button {
+        padding: 12px 24px;
+        font-size: 14px;
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    /* Головна секція */
+    main {
+        padding: 60px 15px 40px;
+        text-align: center;
+    }
+    
+    main h1 {
+        font-size: 28px;
+        line-height: 1.3;
+        margin-bottom: 20px;
+    }
+    
+    main p {
+        font-size: 16px;
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+    
+    .button-group {
+        margin-top: 30px;
+    }
+    
+    .button-group a {
+        padding: 14px 28px;
+        font-size: 16px;
+        width: 100%;
+        display: block;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    /* Секція переваг */
+    .features {
+        padding: 50px 15px;
+    }
+    
+    .features h2 {
+        font-size: 32px;
+        margin-bottom: 40px;
+        line-height: 1.2;
+    }
+    
+    .feature-blocks {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+    
+    .feature {
+        max-width: 100%;
+        min-width: auto;
+        width: 100%;
+        padding: 25px 20px;
+        text-align: center;
+    }
+    
+    .feature h3 {
+        font-size: 22px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    
+    .feature p {
+        font-size: 15px;
+        text-align: center;
+        line-height: 1.6;
+    }
+
+    /* Секція цін */
+    #pricing {
+        padding: 50px 15px;
+    }
+    
+    #pricing h2 {
+        font-size: 32px;
+        margin-bottom: 20px;
+        line-height: 1.2;
+    }
+    
+    #pricing > p {
+        font-size: 16px;
+        margin-bottom: 40px;
+        line-height: 1.6;
+    }
+    
+    .course-grid {
+        flex-direction: column;
+        align-items: center;
+        gap: 25px;
+        margin-top: 30px;
+    }
+    
+    .pricing-box {
+        max-width: 100%;
+        padding: 25px 20px;
+        margin: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .tariff-header {
+        font-size: 16px;
+        padding: 12px 0;
+        margin-bottom: 20px;
+    }
+    
+    .course-details {
+        margin-bottom: 20px;
+    }
+    
+    .course-details li {
+        font-size: 14px;
+        padding: 6px 0;
+        line-height: 1.5;
+    }
+    
+    .pricing-box .price {
+        font-size: 32px;
+        margin: 20px 0;
+    }
+    
+    .pricing-box label {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+    
+    .pricing-box input {
+        padding: 14px;
+        font-size: 16px;
+        margin-bottom: 15px;
+    }
+    
+    .pricing-box button {
+        padding: 16px;
+        font-size: 16px;
+        margin-top: 10px;
+    }
+
+    /* Таблиця */
+    .table-wrapper {
+        margin: 30px 10px;
+        padding: 15px 10px;
+        overflow-x: auto;
+    }
+    
+    .table-scroll-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        font-size: 12px;
+        min-width: 600px; /* Мінімальна ширина для горизонтального скролу */
+    }
+    
+    th {
+        padding: 10px 8px;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+    
+    td {
+        padding: 10px 8px;
+        font-size: 12px;
+    }
+    
+    .status-badge {
+        padding: 3px 8px;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+
+    /* Форма */
+    .form-container {
+        margin: 30px 10px;
+        padding: 25px 20px;
+        width: calc(100% - 20px);
+        box-sizing: border-box;
+    }
+    
+    .form-container h2 {
+        font-size: 24px;
+        margin-bottom: 25px;
+        line-height: 1.3;
+    }
+    
+    .form-group {
+        margin-bottom: 18px;
+    }
+    
+    .form-group label {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+    
+    .form-group input,
+    .form-group select {
+        padding: 14px;
+        font-size: 16px;
+        border-radius: 12px;
+    }
+    
+    .input-with-icon input,
+    .input-with-icon select {
+        padding-left: 40px;
+    }
+    
+    .input-with-icon .input-icon {
+        left: 14px;
+        font-size: 14px;
+    }
+    
+    button.submit-btn {
+        padding: 16px;
+        font-size: 16px;
+        margin-top: 15px;
+        border-radius: 12px;
+    }
+
+    /* Футер */
+    footer {
+        padding: 40px 15px;
+        font-size: 14px;
+    }
+    
+    footer a {
+        margin: 8px 0;
+        display: block;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    footer a:last-child {
+        border-bottom: none;
+    }
+
+    /* Додаткові покращення для мобільних */
+    
+    /* Збільшення області натискання для кнопок */
+    .pricing-box button,
+    .button-group a,
+    header a.cta-button,
+    button.submit-btn {
+        min-height: 44px; /* Мінімальна висота для зручності натискання */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Покращення читабельності тексту */
+    .feature p,
+    .course-details li,
+    main p {
+        text-align: left;
+    }
+    
+    .feature,
+    .pricing-box {
+        text-align: left;
+    }
+    
+    .feature h3,
+    .pricing-box .price,
+    .tariff-header {
+        text-align: center;
+    }
+    
+    /* Анімації для мобільних (менш інтенсивні) */
+    .feature:hover,
+    .pricing-box:hover {
+        transform: translateY(-5px);
+    }
+    
+    .button-group a:hover,
+    .pricing-box button:hover,
+    header a.cta-button:hover,
+    button.submit-btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    /* Горизонтальний скрол для таблиці з індикатором */
+    .table-scroll-container::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-thumb {
+        background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+        border-radius: 4px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(45deg, #5a4fcf, #9085f7);
+    }
+    
+    /* Покращення для форм на мобільних */
+    .form-group input:focus,
+    .form-group select:focus,
+    .pricing-box input:focus {
+        transform: translateY(-1px);
+        box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
+    }
+    
+    /* Зменшення відступів між елементами */
+    .features,
+    #pricing,
+    main {
+        margin-bottom: 0;
+    }
+    
+    /* Покращення для довгих текстів */
+    .course-details li {
+        word-wrap: break-word;
+        hyphens: auto;
+    }
+    
+    /* Оптимізація для portrait орієнтації */
+    @media (orientation: portrait) {
+        .course-grid {
+            gap: 20px;
+        }
+        
+        .feature-blocks {
+            gap: 15px;
+        }
+        
+        main {
+            padding: 50px 15px 30px;
+        }
+        
+        .features,
+        #pricing {
+            padding: 40px 15px;
+        }
     }
 }
 
@@ -884,4 +1578,134 @@ tbody tr:hover {
     transform: translateY(-3px) scale(1.01); /* Більш плавний ефект підняття */
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.07);
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+@media (max-width: 768px) {
+    .about-course,
+    .target-audience,
+    .about-author {
+        padding: 60px 15px;
+    }
+    
+    .about-course h2,
+    .target-audience h2,
+    .about-author h2 {
+        font-size: 32px;
+        margin-bottom: 40px;
+    }
+    
+    .course-benefits {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .benefit-item {
+        padding: 25px;
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .benefit-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 24px;
+        margin: 0 auto;
+    }
+    
+    .audience-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .audience-item {
+        padding: 30px 25px;
+    }
+    
+    .audience-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 35px;
+    }
+    
+    .audience-item h3 {
+        font-size: 22px;
+    }
+    
+    .about-author p {
+        font-size: 16px;
+        padding: 25px;
+    }
+}
+
+@media (max-width: 480px) {
+    .about-course,
+    .target-audience,
+    .about-author {
+        padding: 40px 15px;
+    }
+    
+    .about-course h2,
+    .target-audience h2,
+    .about-author h2 {
+        font-size: 28px;
+        margin-bottom: 30px;
+        line-height: 1.3;
+    }
+    
+    .benefit-item {
+        padding: 20px;
+    }
+    
+    .benefit-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+    
+    .benefit-item p {
+        font-size: 15px;
+    }
+    
+    .audience-item {
+        padding: 25px 20px;
+    }
+    
+    .audience-icon {
+        width: 55px;
+        height: 55px;
+        font-size: 30px;
+    }
+    
+    .audience-item h3 {
+        font-size: 20px;
+    }
+    
+    .audience-item p {
+        font-size: 15px;
+    }
+    
+    .about-author p {
+        font-size: 15px;
+        padding: 20px;
+    }
+}
+
+/* Додаткові анімації для нових секцій */
+.benefit-item,
+.audience-item {
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.benefit-item:nth-child(1) { animation-delay: 0.1s; }
+.benefit-item:nth-child(2) { animation-delay: 0.2s; }
+.benefit-item:nth-child(3) { animation-delay: 0.3s; }
+.benefit-item:nth-child(4) { animation-delay: 0.4s; }
+
+.audience-item:nth-child(1) { animation-delay: 0.1s; }
+.audience-item:nth-child(2) { animation-delay: 0.2s; }
+.audience-item:nth-child(3) { animation-delay: 0.3s; }
+.audience-item:nth-child(4) { animation-delay: 0.4s; }
+
+.about-author p {
+    animation: fadeInUp 0.8s ease-out 0.2s both;
 }

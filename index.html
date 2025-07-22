@@ -1,41 +1,76 @@
-
 <!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Tina's School</title>
+    <title>Tina`s School</title>
     <link rel="stylesheet" href="/public/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <header>
-        <div class="logo">TinaSchool</div>
-        <a href="#pricing" class="cta-button">Почати навчання</a>
+        <div class="logo-wrapper">
+        <img src="/public/images/logo.png" alt="Логотип" class="logo-image">
+        
+        <div class="logo">Tina`s School</div>
+    </div>
+    <a href="#pricing" class="cta-button">Почати навчання</a>
     </header>
 
     <main>
-        <h1>Вивчай англійську з нуля за 30 днів</h1>
-        <p>Наш інтенсивний курс розроблений для швидкого занурення в мовне середовище та отримання видимих результатів у найкоротші терміни.</p>
+        <h1>Твій спокійний і впевнений старт у вивченні румунської мови</h1>
+        <p>Якщо ти давно мрієш почати вивчати румунську мову, але відкладаєш через страх, сумніви або думку «мені буде складно» — цей курс саме для тебе.</p>
         <div class="button-group">
             <a href="#pricing">Обрати курс</a>
         </div>
     </main>
 
     <section class="features">
-        <h2>Переваги нашого курсу</h2>
+        <h2>Що всередині курсу</h2>
         <div class="feature-blocks">
             <div class="feature">
-                <h3>Гнучкий графік</h3>
-                <p>Навчайтесь у зручний для вас час, з будь-якого пристрою.</p>
+                <h3>7 коротких відеоуроків</h3>
+                <p>По 15–30 хв з простими прикладами.</p>
             </div>
             <div class="feature">
-                <h3>Досвідчені викладачі</h3>
-                <p>Наші викладачі — носії мови з багаторічним досвідом.</p>
+                <h3>PDF-зошити для кожного уроку</h3>
+                <p>Для друку або роботи онлайн — все структуровано й зрозуміло.</p>
             </div>
             <div class="feature">
-                <h3>Практичний підхід</h3>
-                <p>80% занять — розмовна практика та реальні життєві ситуації.</p>
+                <h3>Telegram-чат підтримки</h3>
+                <p>Доступ до чату для питань і підтримки протягом усього навчання.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-course">
+        <h2>Курс «Start româna cu Tina» допоможе:</h2>
+        <div class="course-benefits">
+            <p>✓ зрозуміти логіку румунської мови з самого початку</p>
+            <p>✓ навчитися читати, будувати прості речення, ставити запитання</p>
+            <p>✓ опанувати базову граматику без перевантаження</p>
+            <p>✓ подолати бар'єр і повірити: <em>я можу говорити румунською</em></p>
+        </div>
+    </section>
+
+    <section class="target-audience">
+        <h2>Кому підійде цей курс</h2>
+        <div class="audience-grid">
+            <div class="audience-item">
+                <h3>Повним новачкам (A0–A1)</h3>
+                <p>Хто хоче почати легко та без стресу</p>
+            </div>
+            <div class="audience-item">
+                <h3>Українцям у Румунії</h3>
+                <p>Тим, хто планує переїзд або вже живе в Румунії</p>
+            </div>
+            <div class="audience-item">
+                <h3>Тим, хто вивчав раніше</h3>
+                <p>Але нічого не запам'ятав і хоче почати спочатку</p>
+            </div>
+            <div class="audience-item">
+                <h3>Усім, хто хоче структуру</h3>
+                <p>«Розкласти румунську по поличках» без перевантаження</p>
             </div>
         </div>
     </section>
@@ -50,17 +85,17 @@
             <div class="pricing-box">
             <div class="tariff-header">Тариф: <span class="tag-solo">САМОСТІЙНИЙ</span></div>
             <ul class="course-details">
-                <li>14 базових відеоуроків</li>
+                <li>7 відеоуроків по 15–30 хв</li>
                 <li>Доступ до матеріалів 4 місяці</li>
-                <li>11 додаткових PDF матеріалів</li>
+                <li>PDF-зошити для кожного уроку</li>
+                <li class="cross">Telegram-чат з куратором</li>
                 <li class="cross">Перевірка домашнього завдання</li>
-                <li class="cross">Закритий чат з куратором</li>
-                <li><strong>БОНУС:</strong> “Меню + 10 перевірених рецептів”</li>
+                <li><strong>БОНУС:</strong> Базовий розмовник румунських фраз</li>
             </ul>
-            <p class="price">1199 грн</p>
+            <p class="price">899 грн</p>
             <form action="/create-payment" method="POST">
                 <input type="hidden" name="course" value="solo">
-                <label for="name1">Ім’я</label>
+                <label for="name1">Ім'я</label>
                 <input type="text" name="name" id="name1" required>
                 <label for="email1">Email</label>
                 <input type="email" name="email" id="email1" required>
@@ -72,17 +107,17 @@
             <div class="pricing-box">
             <div class="tariff-header">Тариф: <span class="tag-support">З ПІДТРИМКОЮ</span></div>
             <ul class="course-details">
-                <li>14 базових відеоуроків</li>
+                <li>7 відеоуроків по 15–30 хв</li>
                 <li>Доступ до матеріалів до кінця 2025</li>
-                <li>11 додаткових PDF матеріалів</li>
+                <li>PDF-зошити для кожного уроку</li>
+                <li>Telegram-чат з куратором</li>
                 <li>Перевірка домашнього завдання</li>
-                <li>Закритий чат з куратором</li>
-                <li><strong>БОНУС:</strong> “Меню + 10 перевірених рецептів”</li>
+                <li><strong>БОНУС:</strong> Базовий розмовник румунських фраз</li>
             </ul>
-            <p class="price">1799 грн</p>
+            <p class="price">1399 грн</p>
             <form action="/create-payment" method="POST">
                 <input type="hidden" name="course" value="support">
-                <label for="name2">Ім’я</label>
+                <label for="name2">Ім'я</label>
                 <input type="text" name="name" id="name2" required>
                 <label for="email2">Email</label>
                 <input type="email" name="email" id="email2" required>
@@ -93,8 +128,13 @@
         </div>
     </section>
 
+    <section class="about-author">
+        <h2>Про авторку курсу</h2>
+        <p><strong>Тіна Пілат</strong> — викладачка румунської мови з багаторічним досвідом. Її головна мета — не просто навчити, а показати: <strong>румунська може бути легкою, зрозумілою й навіть приємною.</strong></p>
+    </section>
+
     <footer>
-        <p>TinaSchool</p>
+        <p>Start româna cu Tina</p>
         <div>
             <a href="tel:+380991234567">+380 (99) 123-45-67</a>
             <a href="mailto:contact@langspace.com">contact@langspace.com</a>
@@ -104,7 +144,7 @@
             <a href="#">Telegram</a>
             <a href="#">Facebook</a>
         </div>
-        <p>&copy; 2025 TinaSchool. Всі права захищено.</p>
+        <p>&copy; 2025 Start româna cu Tina. Всі права захищено.</p>
     </footer>
 
 </body>
