@@ -391,6 +391,22 @@ app.post('/server-callback', async (req, res) => {
     }
 });
 
+app.get('/test-email', async (req, res) => {
+  try {
+    await sendPaymentConfirmationEmail(
+      'andrijhkrasevskij@HTMLDetailsElement.com',  // заміни на свій емейл
+      'Тестовий користувач',
+      'Тестовий курс',
+      'TEST_ORDER_12345'
+    );
+    res.send('✅ Тестовий лист успішно відправлено!');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('❌ Помилка при відправці тестового листа');
+  }
+});
+
+
 // Graceful shutdown
 process.on('SIGTERM', () => {
     console.log('🔄 Отримано сигнал SIGTERM, завершення роботи...');
