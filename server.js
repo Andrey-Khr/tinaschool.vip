@@ -394,7 +394,7 @@ app.post('/server-callback', async (req, res) => {
 app.get('/test-email', async (req, res) => {
   try {
     await sendPaymentConfirmationEmail(
-      'andrijhkrasevskij@HTMLDetailsElement.com',  // заміни на свій емейл
+      'andrijhkrasevskij@gmail.com',  // заміни на свій емейл
       'Тестовий користувач',
       'Тестовий курс',
       'TEST_ORDER_12345'
