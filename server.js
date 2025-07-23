@@ -247,11 +247,11 @@ app.post('/create-payment', paymentLimiter, async (req, res) => {
         const courses = {
             solo: {
                 name: 'Курс: Самостійний',
-                price: '899' // ВИПРАВЛЕНО ЦІНУ
+                price: '497' // ВИПРАВЛЕНО ЦІНУ
             },
             support: {
                 name: 'Курс з підтримкою',
-                price: '1399' // ВИПРАВЛЕНО ЦІНУ
+                price: '777' // ВИПРАВЛЕНО ЦІНУ
             }
         };
 
