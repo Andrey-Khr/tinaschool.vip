@@ -6,7 +6,6 @@ const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 require('dotenv').config();
-const axios = require('axios');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -390,63 +389,6 @@ app.post('/server-callback', async (req, res) => {
         console.error('❌ Помилка обробки callback:', err);
         res.status(500).send('Server error');
     }
-});
-
-app.get('/test-email', async (req, res) => {
-  try {
-    await sendPaymentConfirmationEmail(
-      'andrijhkrasevskij@gmail.com',  // заміни на свій емейл
-      'Тестовий користувач',
-      'Тестовий курс',
-      'TEST_ORDER_12345'
-    );
-    res.send('✅ Тестовий лист успішно відправлено!');
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('❌ Помилка при відправці тестового листа');
-  }
-});
-
-
-app.post('/test-callback', async (req, res) => {
-  try {
-    // Імітуємо дані callback
-    const orderReference = req.body.orderReference || 'COURSE_TEST_12345';
-    const status = req.body.status || 'accept';
-    const time = Math.floor(Date.now() / 1000).toString();
-
-    // Формуємо підпис як у справжньому callback
-    const stringToSign = [orderReference, status, time].join(';');
-    const signature = crypto
-      .createHmac('md5', MERCHANT_SECRET_KEY)
-      .update(stringToSign)
-      .digest('hex');
-
-    // Формуємо тіло запиту, що платіжна система відправляє
-    const callbackBody = {
-      orderReference,
-      status,
-      time,
-      merchantSignature: signature
-    };
-
-    // Відправляємо POST запит на свій же сервер для імітації callback
-    const serverUrl = `${req.protocol}://${req.get('host')}/server-callback`;
-
-    const response = await axios.post(serverUrl, callbackBody, {
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    res.json({
-      message: 'Імітація callback успішна',
-      callbackResponse: response.data,
-      sentData: callbackBody
-    });
-
-  } catch (error) {
-    console.error('❌ Помилка імітації callback:', error.message);
-    res.status(500).json({ error: error.message });
-  }
 });
 
 // Graceful shutdown
