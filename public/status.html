@@ -21,7 +21,7 @@
             const orderId = getQueryParam('order_id');
             if (!orderId) {
                 // Якщо order_id не знайдено, перенаправляємо на сторінку помилки
-                window.location.href = '/public/failure.html';
+                window.location.href = '/failure.html';
                 return;
             }
 
@@ -32,14 +32,14 @@
 
                 // Перенаправляємо користувача на основі статусу
                 if (data.status === 'accept') {
-                    window.location.href = '/public/success.html';
+                    window.location.href = '/success.html';
                 } else {
-                    window.location.href = '/public/failure.html';
+                    window.location.href = '/failure.html';
                 }
             } catch (error) {
                 console.error('Помилка перевірки статусу:', error);
                 // Якщо сталася помилка, відправляємо на сторінку з помилкою
-                window.location.href = '/public/failure.html';
+                window.location.href = '/failure.html';
             }
         }
 
