@@ -26,7 +26,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: 
+    background:
         radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
     z-index: -1;
@@ -52,8 +52,15 @@ header {
 }
 
 @keyframes slideDown {
-    from { transform: translateY(-100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 
@@ -118,8 +125,15 @@ main {
 }
 
 @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(50px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 main h1 {
@@ -135,8 +149,15 @@ main h1 {
 }
 
 @keyframes slideInFromLeft {
-    from { opacity: 0; transform: translateX(-50px); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 main p {
@@ -149,8 +170,15 @@ main p {
 }
 
 @keyframes slideInFromRight {
-    from { opacity: 0; transform: translateX(50px); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 .button-group {
@@ -159,10 +187,23 @@ main p {
 }
 
 @keyframes bounceIn {
-    0% { opacity: 0; transform: scale(0.3); }
-    50% { transform: scale(1.05); }
-    70% { transform: scale(0.9); }
-    100% { opacity: 1; transform: scale(1); }
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    70% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .button-group a {
@@ -217,13 +258,13 @@ main p {
     left: 0;
     width: 100%;
     height: 100%;
-    background: 
+    background:
         radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.8) 0%, transparent 50%),
         radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.8) 0%, transparent 50%);
     z-index: 1;
 }
 
-.features > * {
+.features>* {
     position: relative;
     z-index: 2;
 }
@@ -319,18 +360,23 @@ main p {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: 
+    background:
         radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
     background-size: 50px 50px;
     animation: float 20s linear infinite;
 }
 
 @keyframes float {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    100% { transform: translate(-50%, -50%) rotate(360deg); }
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
 }
 
-#pricing > * {
+#pricing>* {
     position: relative;
     z-index: 2;
 }
@@ -346,7 +392,7 @@ main p {
     text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-#pricing > p {
+#pricing>p {
     font-size: 20px;
     color: #2d3436;
     margin-bottom: 60px;
@@ -414,7 +460,7 @@ main p {
     z-index: 2;
 }
 
-.tag-solo { 
+.tag-solo {
     background: linear-gradient(45deg, #00b894, #00cec9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -422,13 +468,44 @@ main p {
     font-weight: 800;
 }
 
-.tag-support { 
-    background: linear-gradient(45deg, #e17055, #fd79a8);
+.tag-support {
+    background: linear-gradient(45deg, #ffdb4d, #ffeb99);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     font-weight: 800;
 }
+
+.course-start-note {
+    text-align: center;
+    margin: 40px auto;
+    font-weight: 700;
+    font-size: 22px;
+    color: #2d3436;
+    /* основний текст темно-сірий */
+    max-width: 600px;
+    position: relative;
+    z-index: 2;
+}
+
+.course-start-note {
+    text-align: center;
+    padding: 40px 20px;
+    margin: 50px auto;
+    max-width: 800px;
+}
+
+.course-start-note p {
+    font-size: 32px;
+    font-weight: 800;
+    color: #fd79a8;
+    line-height: 1.4;
+    margin: 0 auto;
+}
+
+
+
+
 
 .course-details {
     list-style: none;
@@ -469,6 +546,47 @@ main p {
     color: #e17055;
     font-weight: bold;
     font-size: 18px;
+}
+
+.price-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    margin: 20px 0;
+    position: relative;
+}
+
+.old-price {
+    font-size: 24px;
+    color: #b2bec3;
+    font-weight: 600;
+    opacity: 0.85;
+    position: relative;
+    display: inline-block;
+}
+
+.old-price::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    background: #d63031;
+    transform: rotate(-10deg);
+    transform-origin: center;
+}
+
+.price {
+    font-size: 40px;
+    background: linear-gradient(45deg, #e17055, #fd79a8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+    margin: 0;
+    /* прибрати зайвий відступ */
 }
 
 .pricing-box .price {
@@ -552,6 +670,33 @@ main p {
     box-shadow: 0 12px 30px rgba(108, 92, 231, 0.4);
 }
 
+.payment-note {
+    font-size: 12px;
+    color: #636e72;
+    margin-top: 10px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.payment-note a {
+    color: #6c5ce7;
+    text-decoration: underline;
+}
+
+.payment-note strong {
+    font-weight: 600;
+}
+
+.payment-note a {
+    position: relative;
+    /* щоб поставити z-index */
+    z-index: 10;
+    /* щоб бути поверх інших елементів */
+    pointer-events: auto;
+    /* щоб кліки проходили */
+}
+
+
 /* Футер */
 footer {
     background: linear-gradient(45deg, #6c5ce7, #a29bfe);
@@ -571,13 +716,13 @@ footer::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: 
+    background:
         radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
     z-index: 1;
 }
 
-footer > * {
+footer>* {
     position: relative;
     z-index: 2;
 }
@@ -594,6 +739,7 @@ footer a:hover {
     color: #fff;
     text-shadow: 0 0 10px rgba(253, 203, 110, 0.5);
 }
+
 /* ============================================
    ДОДАТКОВІ СТИЛІ ДЛЯ КУРСУ РУМУНСЬКОЇ МОВИ
    ============================================ */
@@ -615,13 +761,13 @@ footer a:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background: 
+    background:
         radial-gradient(circle at 30% 30%, rgba(108, 92, 231, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 70% 70%, rgba(162, 155, 254, 0.1) 0%, transparent 50%);
     z-index: 1;
 }
 
-.about-course > * {
+.about-course>* {
     position: relative;
     z-index: 2;
 }
@@ -640,9 +786,10 @@ footer a:hover {
 }
 
 .course-benefits {
-      display: flex;
-      justify-content: center; /* по горизонталі */
-      align-items: center; 
+    display: flex;
+    justify-content: center;
+    /* по горизонталі */
+    align-items: center;
     max-width: 1200px;
     margin: 0 auto;
 }
@@ -732,13 +879,13 @@ footer a:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background: 
+    background:
         radial-gradient(circle at 25% 75%, rgba(225, 112, 85, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 75% 25%, rgba(253, 121, 168, 0.1) 0%, transparent 50%);
     z-index: 1;
 }
 
-.target-audience > * {
+.target-audience>* {
     position: relative;
     z-index: 2;
 }
@@ -754,19 +901,27 @@ footer a:hover {
 }
 
 .audience-grid {
-    display: flex;            /* Вмикаємо Flexbox */
-    flex-wrap: wrap;          /* Дозволяємо елементам переноситись на новий рядок */
-    justify-content: center;  /* Центруємо елементи по горизонталі */
-    gap: 30px;                /* Задаємо відступ між блоками */
+    display: flex;
+    /* Вмикаємо Flexbox */
+    flex-wrap: wrap;
+    /* Дозволяємо елементам переноситись на новий рядок */
+    justify-content: center;
+    /* Центруємо елементи по горизонталі */
+    gap: 30px;
+    /* Задаємо відступ між блоками */
     max-width: 1200px;
     margin: 0 auto;
-    justify-content: center; /* ЗМІНА: Додано для кращого центрування */
+    justify-content: center;
+    /* ЗМІНА: Додано для кращого центрування */
 }
 
 .audience-item {
-     flex-basis: 280px; /* Базова ширина елемента */
-    flex-grow: 1;      /* Дозволяє елементу рости, щоб заповнити місце */
-    max-width: 380px;  /* Максимальна ширина, щоб не розтягувались занадто сильно */
+    flex-basis: 280px;
+    /* Базова ширина елемента */
+    flex-grow: 1;
+    /* Дозволяє елементу рости, щоб заповнити місце */
+    max-width: 380px;
+    /* Максимальна ширина, щоб не розтягувались занадто сильно */
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -816,7 +971,8 @@ footer a:hover {
 }
 
 .audience-item h3 {
-    font-size: 30px; /* ЗМІНА: Збільшено з 24px */
+    font-size: 30px;
+    /* ЗМІНА: Збільшено з 24px */
     background: linear-gradient(45deg, #e17055, #fd79a8);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -826,7 +982,7 @@ footer a:hover {
 }
 
 .audience-item p {
-    font-size: 20px; 
+    font-size: 20px;
     color: #555;
     margin: 0;
     line-height: 1.6;
@@ -849,12 +1005,12 @@ footer a:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    background: 
+    background:
         radial-gradient(circle at 50% 50%, rgba(108, 92, 231, 0.05) 0%, transparent 70%);
     z-index: 1;
 }
 
-.about-author > * {
+.about-author>* {
     position: relative;
     z-index: 2;
 }
@@ -872,8 +1028,6 @@ footer a:hover {
 .about-author p {
     font-size: 20px;
     color: #2d3436;
-    max-width: 800px;
-    margin: 0 auto;
     line-height: 1.7;
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
@@ -882,6 +1036,21 @@ footer a:hover {
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.3);
+    flex: 1;
+    margin: 0;
+    /* 💥 прибираємо auto-margin */
+    max-width: none;
+    /* 💥 дозволяємо флекс-ширину */
+}
+
+.inline-author-photo {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 50%;
+    float: left;
+    margin-right: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .about-author strong {
@@ -891,17 +1060,88 @@ footer a:hover {
     background-clip: text;
     font-weight: 700;
 }
+
+.author-content {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+.side-author-photo {
+    width: auto;
+    height: auto;
+    max-width: 200px;
+    object-fit: cover;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+.author-flex-row {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+.author-side-photo {
+    height: auto;
+    max-width: 200px;
+    object-fit: cover;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+    align-self: stretch;
+    /* важливо: вирівнює по висоті з <p> */
+}
+
+/* адаптивність для мобільних */
+@media (max-width: 768px) {
+    .author-flex-row {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .author-side-photo {
+        max-width: 80%;
+        height: auto;
+        align-self: center;
+    }
+
+    .inline-author-photo {
+        float: none;
+        display: block;
+        margin: 0 auto 15px;
+    }
+
+    .about-author p {
+        text-align: left;
+    }
+}
+
 /* Контейнер для логотипа та тексту */
 .logo-wrapper {
     display: flex;
-    align-items: center; /* Вирівнює логотип та текст по центру по вертикалі */
-    gap: 15px;           /* Додає відступ між зображенням та текстом */
+    align-items: center;
+    /* Вирівнює логотип та текст по центру по вертикалі */
+    gap: 15px;
+    /* Додає відступ між зображенням та текстом */
 }
 
 /* Стиль для самого зображення логотипа */
 .logo-image {
-    height: 50px; /* Встановіть висоту логотипа для великих екранів */
-    width: auto;  /* Ширина буде автоматичною для збереження пропорцій */
+    height: 50px;
+    /* Встановіть висоту логотипа для великих екранів */
+    width: auto;
+    /* Ширина буде автоматичною для збереження пропорцій */
 }
 
 /* Адаптивність */
@@ -912,69 +1152,70 @@ footer a:hover {
         padding: 15px;
         min-height: auto;
     }
-    
+
     header .logo {
         font-size: 24px;
     }
+
     .logo-image {
         height: 40px;
     }
-    
+
     header a.cta-button {
         padding: 10px 20px;
         font-size: 13px;
     }
-    
+
     main {
         padding: 60px 15px 50px;
     }
-    
+
     .features {
         padding: 60px 15px;
     }
-    
+
     #pricing {
         padding: 60px 15px;
     }
-    
+
     .feature-blocks {
         flex-direction: column;
         align-items: center;
         gap: 20px;
     }
-    
+
     .feature {
         max-width: 100%;
         min-width: auto;
         width: 100%;
         padding: 25px;
     }
-    
+
     .course-grid {
         flex-direction: column;
         align-items: center;
         gap: 20px;
     }
-    
+
     .pricing-box {
         max-width: 100%;
         padding: 25px;
     }
-    
+
     .table-wrapper {
         margin: 30px 10px;
         padding: 15px;
     }
-    
+
     .form-container {
         margin: 30px 10px;
         padding: 25px;
     }
-    
+
     footer {
         padding: 40px 15px;
     }
-    
+
     footer a {
         margin: 5px;
         display: block;
@@ -983,6 +1224,7 @@ footer a:hover {
 
 /* Розширений адаптив для мобільних пристроїв 480px і менше */
 @media (max-width: 480px) {
+
     /* Загальні стилі */
     body {
         font-size: 14px;
@@ -996,15 +1238,16 @@ footer a:hover {
         gap: 12px;
         position: relative;
     }
-    
+
     header .logo {
         font-size: 24px;
         margin-bottom: 8px;
     }
+
     .logo-image {
         height: 20px;
     }
-    
+
     header a.cta-button {
         padding: 12px 24px;
         font-size: 14px;
@@ -1018,23 +1261,23 @@ footer a:hover {
         padding: 60px 15px 40px;
         text-align: center;
     }
-    
+
     main h1 {
         font-size: 28px;
         line-height: 1.3;
         margin-bottom: 20px;
     }
-    
+
     main p {
         font-size: 16px;
         margin-bottom: 30px;
         line-height: 1.6;
     }
-    
+
     .button-group {
         margin-top: 30px;
     }
-    
+
     .button-group a {
         padding: 14px 28px;
         font-size: 16px;
@@ -1048,19 +1291,19 @@ footer a:hover {
     .features {
         padding: 50px 15px;
     }
-    
+
     .features h2 {
         font-size: 32px;
         margin-bottom: 40px;
         line-height: 1.2;
     }
-    
+
     .feature-blocks {
         flex-direction: column;
         align-items: center;
         gap: 20px;
     }
-    
+
     .feature {
         max-width: 100%;
         min-width: auto;
@@ -1068,13 +1311,13 @@ footer a:hover {
         padding: 25px 20px;
         text-align: center;
     }
-    
+
     .feature h3 {
         font-size: 22px;
         margin-bottom: 15px;
         text-align: center;
     }
-    
+
     .feature p {
         font-size: 15px;
         text-align: center;
@@ -1085,26 +1328,26 @@ footer a:hover {
     #pricing {
         padding: 50px 15px;
     }
-    
+
     #pricing h2 {
         font-size: 32px;
         margin-bottom: 20px;
         line-height: 1.2;
     }
-    
-    #pricing > p {
+
+    #pricing>p {
         font-size: 16px;
         margin-bottom: 40px;
         line-height: 1.6;
     }
-    
+
     .course-grid {
         flex-direction: column;
         align-items: center;
         gap: 25px;
         margin-top: 30px;
     }
-    
+
     .pricing-box {
         max-width: 100%;
         padding: 25px 20px;
@@ -1112,39 +1355,39 @@ footer a:hover {
         width: 100%;
         box-sizing: border-box;
     }
-    
+
     .tariff-header {
         font-size: 16px;
         padding: 12px 0;
         margin-bottom: 20px;
     }
-    
+
     .course-details {
         margin-bottom: 20px;
     }
-    
+
     .course-details li {
         font-size: 14px;
         padding: 6px 0;
         line-height: 1.5;
     }
-    
+
     .pricing-box .price {
         font-size: 32px;
         margin: 20px 0;
     }
-    
+
     .pricing-box label {
         font-size: 14px;
         margin-bottom: 6px;
     }
-    
+
     .pricing-box input {
         padding: 14px;
         font-size: 16px;
         margin-bottom: 15px;
     }
-    
+
     .pricing-box button {
         padding: 16px;
         font-size: 16px;
@@ -1157,28 +1400,29 @@ footer a:hover {
         padding: 15px 10px;
         overflow-x: auto;
     }
-    
+
     .table-scroll-container {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
-    
+
     table {
         font-size: 12px;
-        min-width: 600px; /* Мінімальна ширина для горизонтального скролу */
+        min-width: 600px;
+        /* Мінімальна ширина для горизонтального скролу */
     }
-    
+
     th {
         padding: 10px 8px;
         font-size: 13px;
         white-space: nowrap;
     }
-    
+
     td {
         padding: 10px 8px;
         font-size: 12px;
     }
-    
+
     .status-badge {
         padding: 3px 8px;
         font-size: 11px;
@@ -1192,39 +1436,39 @@ footer a:hover {
         width: calc(100% - 20px);
         box-sizing: border-box;
     }
-    
+
     .form-container h2 {
         font-size: 24px;
         margin-bottom: 25px;
         line-height: 1.3;
     }
-    
+
     .form-group {
         margin-bottom: 18px;
     }
-    
+
     .form-group label {
         font-size: 14px;
         margin-bottom: 6px;
     }
-    
+
     .form-group input,
     .form-group select {
         padding: 14px;
         font-size: 16px;
         border-radius: 12px;
     }
-    
+
     .input-with-icon input,
     .input-with-icon select {
         padding-left: 40px;
     }
-    
+
     .input-with-icon .input-icon {
         left: 14px;
         font-size: 14px;
     }
-    
+
     button.submit-btn {
         padding: 16px;
         font-size: 16px;
@@ -1237,81 +1481,82 @@ footer a:hover {
         padding: 40px 15px;
         font-size: 14px;
     }
-    
+
     footer a {
         margin: 8px 0;
         display: block;
         padding: 8px 0;
         border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     }
-    
+
     footer a:last-child {
         border-bottom: none;
     }
 
     /* Додаткові покращення для мобільних */
-    
+
     /* Збільшення області натискання для кнопок */
     .pricing-box button,
     .button-group a,
     header a.cta-button,
     button.submit-btn {
-        min-height: 44px; /* Мінімальна висота для зручності натискання */
+        min-height: 44px;
+        /* Мінімальна висота для зручності натискання */
         display: flex;
         align-items: center;
         justify-content: center;
     }
-    
+
     /* Покращення читабельності тексту */
     .feature p,
     .course-details li,
     main p {
         text-align: left;
     }
-    
+
     .feature,
     .pricing-box {
         text-align: left;
     }
-    
+
     .feature h3,
     .pricing-box .price,
     .tariff-header {
         text-align: center;
     }
-    
+
     /* Анімації для мобільних (менш інтенсивні) */
     .feature:hover,
     .pricing-box:hover {
         transform: translateY(-5px);
     }
-    
+
     .button-group a:hover,
     .pricing-box button:hover,
     header a.cta-button:hover,
     button.submit-btn:hover {
         transform: translateY(-2px);
     }
-    
+
     /* Горизонтальний скрол для таблиці з індикатором */
     .table-scroll-container::-webkit-scrollbar {
         height: 8px;
     }
-    
+
     .table-scroll-container::-webkit-scrollbar-track {
         background: rgba(255, 255, 255, 0.3);
         border-radius: 4px;
     }
-    
+
     .table-scroll-container::-webkit-scrollbar-thumb {
         background: linear-gradient(45deg, #6c5ce7, #a29bfe);
         border-radius: 4px;
     }
-    
+
     .table-scroll-container::-webkit-scrollbar-thumb:hover {
         background: linear-gradient(45deg, #5a4fcf, #9085f7);
     }
-    
+
     /* Покращення для форм на мобільних */
     .form-group input:focus,
     .form-group select:focus,
@@ -1319,34 +1564,34 @@ footer a:hover {
         transform: translateY(-1px);
         box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.12);
     }
-    
+
     /* Зменшення відступів між елементами */
     .features,
     #pricing,
     main {
         margin-bottom: 0;
     }
-    
+
     /* Покращення для довгих текстів */
     .course-details li {
         word-wrap: break-word;
         hyphens: auto;
     }
-    
+
     /* Оптимізація для portrait орієнтації */
     @media (orientation: portrait) {
         .course-grid {
             gap: 20px;
         }
-        
+
         .feature-blocks {
             gap: 15px;
         }
-        
+
         main {
             padding: 50px 15px 30px;
         }
-        
+
         .features,
         #pricing {
             padding: 40px 15px;
@@ -1356,9 +1601,17 @@ footer a:hover {
 
 /* Додаткові анімації */
 @keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 .pricing-box:hover .price {
@@ -1368,8 +1621,9 @@ footer a:hover {
 /* Плавний скрол */
 html {
     scroll-behavior: smooth;
-    }
-    /*--------------------------------------------------------------------------------------------------*/
+}
+
+/*--------------------------------------------------------------------------------------------------*/
 /* --- Стилі для таблиці (оновлено за шаблоном) --- */
 .table-wrapper {
     max-width: 1200px;
@@ -1381,8 +1635,10 @@ html {
     border-radius: 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.3);
-    overflow: hidden; /* Важливо для заокруглення кутів таблиці */
-    animation: fadeInUp 1s ease-out; /* Анімація появи з шаблону */
+    overflow: hidden;
+    /* Важливо для заокруглення кутів таблиці */
+    animation: fadeInUp 1s ease-out;
+    /* Анімація появи з шаблону */
 }
 
 /* Обгортка для скролу на мобільних пристроях */
@@ -1409,7 +1665,8 @@ th {
 
 td {
     padding: 15px 20px;
-    border-bottom: 1px solid rgba(211, 211, 211, 0.5); /* #ddd з прозорістю */
+    border-bottom: 1px solid rgba(211, 211, 211, 0.5);
+    /* #ddd з прозорістю */
 }
 
 tbody tr {
@@ -1417,7 +1674,8 @@ tbody tr {
 }
 
 tbody tr:hover {
-    background-color: rgba(253, 203, 110, 0.3); /* Використовуємо колір з фону шаблону */
+    background-color: rgba(253, 203, 110, 0.3);
+    /* Використовуємо колір з фону шаблону */
 }
 
 tbody tr:last-child td {
@@ -1490,7 +1748,8 @@ button.submit-btn {
     margin-top: 10px;
     font-size: 18px;
     font-weight: 700;
-    background: linear-gradient(45deg, #e17055, #fd79a8); /* Акцентний градієнт з шаблону */
+    background: linear-gradient(45deg, #e17055, #fd79a8);
+    /* Акцентний градієнт з шаблону */
     color: white;
     border: none;
     border-radius: 15px;
@@ -1520,6 +1779,7 @@ button.submit-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 12px 30px rgba(225, 112, 85, 0.4);
 }
+
 /***********************************************************************************/
 /* --- Додаткові стилі для покращення дизайну --- */
 
@@ -1530,16 +1790,18 @@ button.submit-btn:hover {
     font-weight: 600;
     font-size: 13px;
     color: #fff;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .status-paid {
-    background: linear-gradient(45deg, #2ed573, #1dd1a1); /* Яскравий зелений */
+    background: linear-gradient(45deg, #2ed573, #1dd1a1);
+    /* Яскравий зелений */
     box-shadow: 0 4px 10px rgba(46, 213, 115, 0.3);
 }
 
 .status-pending {
-    background: linear-gradient(45deg, #ff9f43, #ffb142); /* Теплий помаранчевий */
+    background: linear-gradient(45deg, #ff9f43, #ffb142);
+    /* Теплий помаранчевий */
     box-shadow: 0 4px 10px rgba(255, 159, 67, 0.3);
 }
 
@@ -1553,7 +1815,8 @@ button.submit-btn:hover {
     left: 18px;
     top: 50%;
     transform: translateY(-50%);
-    color: #a29bfe; /* Колір іконки в тон дизайну */
+    color: #a29bfe;
+    /* Колір іконки в тон дизайну */
     font-size: 16px;
     transition: color 0.3s ease;
 }
@@ -1565,72 +1828,100 @@ button.submit-btn:hover {
 }
 
 .form-group:focus-within .input-icon {
-    color: #6c5ce7; /* Зміна кольору іконки при фокусі */
+    color: #6c5ce7;
+    /* Зміна кольору іконки при фокусі */
 }
 
 /* 3. Покращення для кнопок та посилань */
-th i, .action-links i, .submit-btn i {
-    margin-right: 8px; /* Відступ для іконок */
+th i,
+.action-links i,
+.submit-btn i {
+    margin-right: 8px;
+    /* Відступ для іконок */
 }
 
 /* 4. Покращення для таблиці */
 tbody tr:hover {
-    transform: translateY(-3px) scale(1.01); /* Більш плавний ефект підняття */
+    transform: translateY(-3px) scale(1.01);
+    /* Більш плавний ефект підняття */
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.07);
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
+
 @media (max-width: 768px) {
+
     .about-course,
     .target-audience,
     .about-author {
         padding: 60px 15px;
     }
-    
+
+    .author-wrapper {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .inline-author-photo {
+        float: none;
+        display: block;
+        margin: 0 auto 15px;
+    }
+
+    .author-side-photo {
+        width: 80%;
+        max-width: 300px;
+    }
+
+    .author-wrapper p {
+        text-align: left;
+    }
+
     .about-course h2,
     .target-audience h2,
     .about-author h2 {
         font-size: 32px;
         margin-bottom: 40px;
     }
-    
+
     .course-benefits {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .benefit-item {
         padding: 25px;
         flex-direction: column;
         text-align: center;
         gap: 15px;
     }
-    
+
     .benefit-icon {
         width: 45px;
         height: 45px;
         font-size: 24px;
         margin: 0 auto;
     }
-    
+
     .audience-grid {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
+
     .audience-item {
         padding: 30px 25px;
     }
-    
+
     .audience-icon {
         width: 60px;
         height: 60px;
         font-size: 35px;
     }
-    
+
     .audience-item h3 {
         font-size: 22px;
     }
-    
+
     .about-author p {
         font-size: 16px;
         padding: 25px;
@@ -1638,12 +1929,53 @@ tbody tr:hover {
 }
 
 @media (max-width: 480px) {
+
     .about-course,
     .target-audience,
     .about-author {
         padding: 40px 15px;
     }
-    
+
+    .author-wrapper {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 25px;
+        max-width: 1000px;
+        margin: 0 auto;
+        flex-wrap: wrap;
+    }
+
+    .author-side-photo {
+        width: 160px;
+        height: auto;
+        border-radius: 15px;
+        object-fit: cover;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        flex-shrink: 0;
+    }
+
+    .inline-author-photo {
+        float: left;
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 50%;
+        margin-right: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .author-wrapper p {
+        font-size: 20px;
+        color: #2d3436;
+        line-height: 1.7;
+        margin: 0;
+        background: rgba(255, 255, 255, 0.85);
+        padding: 20px;
+        border-radius: 15px;
+        flex: 1;
+    }
+
     .about-course h2,
     .target-audience h2,
     .about-author h2 {
@@ -1651,39 +1983,39 @@ tbody tr:hover {
         margin-bottom: 30px;
         line-height: 1.3;
     }
-    
+
     .benefit-item {
         padding: 20px;
     }
-    
+
     .benefit-icon {
         width: 40px;
         height: 40px;
         font-size: 20px;
     }
-    
+
     .benefit-item p {
         font-size: 15px;
     }
-    
+
     .audience-item {
         padding: 25px 20px;
     }
-    
+
     .audience-icon {
         width: 55px;
         height: 55px;
         font-size: 30px;
     }
-    
+
     .audience-item h3 {
         font-size: 20px;
     }
-    
+
     .audience-item p {
         font-size: 15px;
     }
-    
+
     .about-author p {
         font-size: 15px;
         padding: 20px;
@@ -1696,15 +2028,37 @@ tbody tr:hover {
     animation: fadeInUp 0.8s ease-out;
 }
 
-.benefit-item:nth-child(1) { animation-delay: 0.1s; }
-.benefit-item:nth-child(2) { animation-delay: 0.2s; }
-.benefit-item:nth-child(3) { animation-delay: 0.3s; }
-.benefit-item:nth-child(4) { animation-delay: 0.4s; }
+.benefit-item:nth-child(1) {
+    animation-delay: 0.1s;
+}
 
-.audience-item:nth-child(1) { animation-delay: 0.1s; }
-.audience-item:nth-child(2) { animation-delay: 0.2s; }
-.audience-item:nth-child(3) { animation-delay: 0.3s; }
-.audience-item:nth-child(4) { animation-delay: 0.4s; }
+.benefit-item:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.benefit-item:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.benefit-item:nth-child(4) {
+    animation-delay: 0.4s;
+}
+
+.audience-item:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.audience-item:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.audience-item:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.audience-item:nth-child(4) {
+    animation-delay: 0.4s;
+}
 
 .about-author p {
     animation: fadeInUp 0.8s ease-out 0.2s both;

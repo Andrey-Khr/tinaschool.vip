@@ -12,7 +12,7 @@
         <div class="logo-wrapper">
         <img src="/images/logo.png" alt="Логотип" class="logo-image">
         
-        <div class="logo">Tina`s School</div>
+        <div class="logo">Tina's School</div>
     </div>
     <a href="#pricing" class="cta-button">Почати навчання</a>
     </header>
@@ -43,8 +43,16 @@
         </div>
     </section>
 
+<section class="course-start-note">
+  <p>
+    Старт — 16 серпня<br>
+    Придбай курс до 7 серпня і отримай його за найкращою ціною!
+  </p>
+</section>
+
+
     <section class="about-course">
-        <h2>Курс «Start româna cu Tina» допоможе:</h2>
+        <h2>Курс «Începe româna cu Tina» допоможе:</h2>
         <div class="course-benefits">
             <p>✓ зрозуміти логіку румунської мови з самого початку</p>
             <p>✓ навчитися читати, будувати прості речення, ставити запитання</p>
@@ -69,6 +77,14 @@
                 <p>Але нічого не запам'ятав і хоче почати спочатку</p>
             </div>
             <div class="audience-item">
+                <h3>Батькам школярів у Румунії</h3>
+                <p>Хто хоче спілкуватися з учителями в румунських школах, розуміти шкільні чати й допомагати дитині з навчанням</p>
+            </div>
+            <div class="audience-item">
+                <h3> Підліткам без мотивації до стандартних курсів</h3>
+                <p>Хто хоче вчитися самостійно та без обмежень</p>
+            </div>
+            <div class="audience-item">
                 <h3>Усім, хто хоче структуру</h3>
                 <p>«Розкласти румунську по поличках» без перевантаження</p>
             </div>
@@ -89,10 +105,11 @@
                 <li>Доступ до матеріалів 4 місяці</li>
                 <li>PDF-зошити для кожного уроку</li>
                 <li class="cross">Telegram-чат з куратором</li>
-                <li class="cross">Перевірка домашнього завдання</li>
-                <li><strong>БОНУС:</strong> Базовий розмовник румунських фраз</li>
             </ul>
-            <p class="price">497 грн</p>
+            <div class="price-wrapper">
+                <p class="old-price">700 грн</p>
+                <p class="price">497 грн</p>
+            </div>
             <form action="/create-payment" method="POST">
                 <input type="hidden" name="course" value="solo">
                 <label for="name1">Ім'я</label>
@@ -101,6 +118,10 @@
                 <input type="email" name="email" id="email1" required>
                 <button type="submit">ПРИДБАТИ КУРС</button>
             </form>
+                 <p class="payment-note">
+                    Натискаючи <strong>«Придбати курс»</strong>, ви погоджуєтесь з 
+                    <a href="/docx/publ.dohovir.pdf" target="_blank">умовами публічного договору-оферти</a>.
+            </p>
             </div>
 
             <!-- Тариф з підтримкою -->
@@ -108,13 +129,14 @@
             <div class="tariff-header">Тариф: <span class="tag-support">З ПІДТРИМКОЮ</span></div>
             <ul class="course-details">
                 <li>7 відеоуроків по 15–30 хв</li>
-                <li>Доступ до матеріалів до кінця 2025</li>
+                <li>Доступ до матеріалів до 6 місяців </li>
                 <li>PDF-зошити для кожного уроку</li>
                 <li>Telegram-чат з куратором</li>
-                <li>Перевірка домашнього завдання</li>
-                <li><strong>БОНУС:</strong> Базовий розмовник румунських фраз</li>
             </ul>
-            <p class="price">777 грн</p>
+            <div class="price-wrapper">
+                <p class="old-price">997 грн</p>
+                <p class="price">777 грн</p>
+            </div>
             <form action="/create-payment" method="POST">
                 <input type="hidden" name="course" value="support">
                 <label for="name2">Ім'я</label>
@@ -123,29 +145,43 @@
                 <input type="email" name="email" id="email2" required>
                 <button type="submit">ПРИДБАТИ КУРС</button>
             </form>
+            <p class="payment-note">
+                Натискаючи <strong>«Придбати курс»</strong>, ви погоджуєтесь з 
+                <a href="/docx/publ.dohovir.pdf" target="_blank">умовами публічного договору-оферти</a>.
+            </p>
             </div>
 
         </div>
     </section>
 
-    <section class="about-author">
-        <h2>Про авторку курсу</h2>
-        <p><strong>Тіна Пілат</strong> — викладачка румунської мови з багаторічним досвідом. Її головна мета — не просто навчити, а показати: <strong>румунська може бути легкою, зрозумілою й навіть приємною.</strong></p>
-    </section>
+<section class="about-author">
+  <h2>Про авторку курсу</h2>
+  <div class="author-flex-row">
+    
+    <p>
+      <img src="/images/author.jpg" alt="Тіна Пілат" class="inline-author-photo">
+      <strong>Тіна Пілат</strong> — викладачка румунської мови з багаторічним досвідом.
+      Її головна мета — не просто навчити, а показати:
+      <strong>румунська може бути легкою, зрозумілою й навіть приємною.</strong>
+    </p>
 
-    <footer>
-        <p>Start româna cu Tina</p>
-        <div>
-            <a href="tel:+380991234567">+380 (99) 123-45-67</a>
-            <a href="mailto:contact@langspace.com">contact@langspace.com</a>
-        </div>
-        <div>
-            <a href="#">Instagram</a>
-            <a href="#">Telegram</a>
-            <a href="#">Facebook</a>
-        </div>
-        <p>&copy; 2025 Start româna cu Tina. Всі права захищено.</p>
-    </footer>
+    <img src="/images/romana.jpg" alt="Тіна Пілат" class="author-side-photo">
+
+  </div>
+</section>
+
+<footer>
+    <p>ФОП Пілат В.Л<br>м. Івано-Франківськ, Україна</p>
+    <div>
+        <a href="tel:+380666224097">+380 66 622 40 97 (Telegram)</a><br>
+        <a href="mailto:tinas.scoala@gmail.com">tinas.scoala@gmail.com</a>
+    </div>
+    <div>
+        <a href="https://www.instagram.com/tinas_school/">Instagram: @tinas_school</a>
+    </div>
+    <p>&copy; 2025 Începe româna cu Tina. Всі права захищено.</p>
+</footer>
+
 
 </body>
 </html>
