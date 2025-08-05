@@ -5,50 +5,13 @@
     <title>Перевірка статусу оплати - TinaSchool</title>
     <link href="/styles.css" rel="stylesheet">
     <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-            margin: 0;
-            font-family: 'Poppins', sans-serif;
-        }
-        .status-container {
-            max-width: 500px;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            text-align: center;
-            color: #2d3436;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        }
-        .loader {
-            border: 8px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 8px solid #6c5ce7;
-            width: 60px;
-            height: 60px;
-            animation: spin 1.5s linear infinite;
-            margin: 0 auto 25px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        h1 {
-            font-size: 24px;
-            color: #6c5ce7;
-            margin-bottom: 15px;
-        }
-        p {
-            font-size: 16px;
-        }
-        #orderId {
-            font-weight: bold;
-            color: #e17055;
-        }
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%); margin: 0; font-family: 'Poppins', sans-serif; }
+        .status-container { max-width: 500px; padding: 40px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-radius: 20px; text-align: center; color: #2d3436; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .loader { border: 8px solid #f3f3f3; border-radius: 50%; border-top: 8px solid #6c5ce7; width: 60px; height: 60px; animation: spin 1.5s linear infinite; margin: 0 auto 25px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        h1 { font-size: 24px; color: #6c5ce7; margin-bottom: 15px; }
+        p { font-size: 16px; }
+        #orderId { font-weight: bold; color: #e17055; }
     </style>
 </head>
 <body>
@@ -80,7 +43,6 @@
                 try {
                     const response = await fetch(`/get-payment-status?order_id=${orderId}`);
                     if (!response.ok) {
-                        // Якщо сервер повернув помилку, зупиняємо перевірку
                         clearInterval(checkStatus);
                         window.location.href = `/failure.html?order_id=${orderId}&error=server_error`;
                         return;
@@ -95,18 +57,15 @@
                         clearInterval(checkStatus);
                         window.location.href = `/failure.html?order_id=${orderId}&error=${data.status}`;
                     }
-                    // Якщо статус 'pending', нічого не робимо і чекаємо наступної перевірки
-
                 } catch (error) {
                     console.error('Помилка перевірки статусу:', error);
                     clearInterval(checkStatus);
                     window.location.href = `/failure.html?order_id=${orderId}&error=network_error`;
                 }
-            }, 2000); // Перевіряти кожні 2 секунди
+            }, 2000);
         } else {
             orderIdElement.textContent = 'не знайдено';
-            // Якщо ID замовлення відсутній, відправляємо на сторінку помилки
-            window.location.href = '/failure.html?error=no_order_id';
+            window.location.href = '/failure.html?error=no_order_id_on_status_page';
         }
     </script>
 </body>

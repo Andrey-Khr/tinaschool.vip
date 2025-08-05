@@ -247,7 +247,7 @@ app.post('/create-payment', paymentLimiter, async (req, res) => {
         const courses = {
             solo: {
                 name: 'Курс: Самостійний',
-                price: '2' // ВИПРАВЛЕНО ЦІНУ
+                price: '1' // ВИПРАВЛЕНО ЦІНУ
             },
             support: {
                 name: 'Курс з підтримкою',
@@ -394,25 +394,32 @@ app.post('/server-callback', async (req, res) => {
 // Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
 app.all('/payment-return', (req, res) => {
     try {
-        console.log(`⚠️  Отримано запит на /payment-return методом ${req.method}`);
-        
-        // Універсально отримуємо дані з тіла запиту (POST) або з параметрів URL (GET)
-        const requestData = Object.keys(req.body || {}).length > 0 ? req.body : req.query;
-        
-        const { orderReference } = requestData;
+        console.log(`⚠️  Користувач повернувся на сайт. Метод: ${req.method}.`);
+        console.log('📦  Дані від браузера:', req.body || req.query);
 
-        if (!orderReference) {
-            console.warn('⚠️  Відсутній orderReference в запиті. Перенаправлення на сторінку помилки.');
-            return res.redirect('/failure.html?error=missing_order_id');
+        const allOrdersData = readOrders();
+        const orders = allOrdersData.orders;
+        
+        // Знаходимо ID останнього створеного замовлення
+        const latestOrderId = Object.keys(orders).sort((a, b) => {
+            const timeA = new Date(orders[a].createdAt).getTime();
+            const timeB = new Date(orders[b].createdAt).getTime();
+            return timeB - timeA;
+        })[0];
+
+        if (!latestOrderId) {
+            console.error('❌ Не вдалося знайти жодного замовлення у файлі.');
+            return res.redirect('/failure.html?error=no_orders_found');
         }
 
-        // Просто перенаправляємо на сторінку перевірки статусу, не ухвалюючи рішень
-        console.log(`⏳  Перенаправлення на сторінку перевірки статусу для замовлення ${orderReference}`);
-        res.redirect(`/status.html?order_id=${orderReference}`);
+        console.log(`⏳  Знайдено останнє замовлення: ${latestOrderId}. Перенаправлення на сторінку перевірки статусу.`);
+        
+        // Перенаправляємо на сторінку статусу з ID останнього замовлення
+        res.redirect(`/status.html?order_id=${latestOrderId}`);
 
     } catch (error) {
-        console.error('❌  Помилка обробки payment return:', error);
-        res.redirect('/failure.html?error=processing_error');
+        console.error('❌  Критична помилка в /payment-return:', error);
+        res.redirect('/failure.html?error=return_processing_error');
     }
 });
 
