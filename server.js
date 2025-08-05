@@ -393,34 +393,49 @@ app.post('/server-callback', async (req, res) => {
 
 // Маршрут для обробки returnUrl та failUrl від WayForPay
 app.post('/payment-return', (req, res) => {
-
-    console.log('📦 Тіло запиту:', req.body);
-    console.log('📄 Статус з WayForPay:', req.body.status);
-
-
     try {
-        const { orderReference, status, reasonCode, reason } = req.body;
-        console.log(`📄 Payment return: ${orderReference}, статус: ${status}`);
-        
+        console.log('⚠️ Отримано POST /payment-return');
+        console.log('📦 Повний запит:', req.body || '[порожнє]');
+        console.log('📄 Статус з WayForPay:', req.body?.status || '[немає]');
+        console.log('🆔 OrderReference:', req.body?.orderReference || '[немає]');
+
+        const { orderReference, status, reasonCode, reason } = req.body || {};
+
         if (!orderReference) {
+            console.warn('⚠️ Відсутній orderReference');
             return res.redirect('/failure.html?error=missing_order_id');
         }
 
-        // Розширений список успішних статусів
-        const successStatuses = ['accept', 'accept_ok', 'accepted', 'success', 'approved'];
-        const isSuccess = successStatuses.includes(status?.toLowerCase());
+        // Читаємо замовлення з файлу
+        const allOrders = readOrders();
+        const order = allOrders.orders[orderReference];
 
-        if (isSuccess) {
-            res.redirect(`/success.html?order_id=${orderReference}`);
+        if (order && order.status === 'paid') {
+            console.log(`✅ Замовлення ${orderReference} вже оплачено — перенаправляємо на success`);
+            return res.redirect(`/success.html?order_id=${orderReference}`);
+        }
+
+        // Розширений список можливих успішних статусів
+        const successStatuses = ['accept', 'accept_ok', 'accepted', 'success', 'approved'];
+        const isSuccess = (status || '').toLowerCase();
+        const matched = successStatuses.includes(isSuccess);
+
+        if (matched) {
+            console.log(`🎉 Статус "${status}" визнано успішним`);
+            return res.redirect(`/success.html?order_id=${orderReference}`);
         } else {
             const errorInfo = reason || reasonCode || status || 'unknown';
-            res.redirect(`/failure.html?order_id=${orderReference}&error=${encodeURIComponent(errorInfo)}`);
+            console.warn(`❌ Статус "${status}" не визнано успішним → redirect to failure`);
+            return res.redirect(`/failure.html?order_id=${orderReference}&error=${encodeURIComponent(errorInfo)}`);
         }
+
     } catch (error) {
-console.error('❌ Помилка обробки payment return:', error);
-console.trace(error);
+        console.error('❌ Помилка обробки payment return:', error);
+        console.trace(error);
+        res.redirect('/failure.html?error=processing_error');
     }
 });
+
 
 // Маршрут для перевірки статусу оплати (використовується в status.html)  
 app.get('/get-payment-status', (req, res) => {
