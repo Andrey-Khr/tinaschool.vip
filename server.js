@@ -391,18 +391,20 @@ app.post('/server-callback', async (req, res) => {
     }
 });
 
-// Маршрут для обробки returnUrl та failUrl від WayForPay
-app.post('/payment-return', (req, res) => {
+// Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
+app.all('/payment-return', (req, res) => {
     try {
-        console.log('⚠️ Отримано POST /payment-return');
-        console.log('📦 Повний запит:', req.body || '[порожнє]');
-        console.log('📄 Статус з WayForPay:', req.body?.status || '[немає]');
-        console.log('🆔 OrderReference:', req.body?.orderReference || '[немає]');
+        console.log(`⚠️ Отримано запит на /payment-return методом ${req.method}`);
+        
+        // Універсально отримуємо дані з тіла запиту (POST) або з параметрів URL (GET)
+        const requestData = Object.keys(req.body || {}).length > 0 ? req.body : req.query;
+        
+        console.log('📦 Отримані дані:', requestData || '[порожнє]');
 
-        const { orderReference, status, reasonCode, reason } = req.body || {};
+        const { orderReference, status, reasonCode, reason } = requestData || {};
 
         if (!orderReference) {
-            console.warn('⚠️ Відсутній orderReference');
+            console.warn('⚠️ Відсутній orderReference в тілі та параметрах запиту');
             return res.redirect('/failure.html?error=missing_order_id');
         }
 
@@ -410,18 +412,20 @@ app.post('/payment-return', (req, res) => {
         const allOrders = readOrders();
         const order = allOrders.orders[orderReference];
 
+        // Якщо фоновий запит уже оновив статус, одразу відправляємо на сторінку успіху
         if (order && order.status === 'paid') {
             console.log(`✅ Замовлення ${orderReference} вже оплачено — перенаправляємо на success`);
             return res.redirect(`/success.html?order_id=${orderReference}`);
         }
 
-        // Розширений список можливих успішних статусів
+        // Якщо фоновий запит ще не прийшов, аналізуємо статус з браузера
         const successStatuses = ['accept', 'accept_ok', 'accepted', 'success', 'approved'];
         const isSuccess = (status || '').toLowerCase();
-        const matched = successStatuses.includes(isSuccess);
-
-        if (matched) {
-            console.log(`🎉 Статус "${status}" визнано успішним`);
+        
+        if (successStatuses.includes(isSuccess)) {
+            console.log(`🎉 Статус "${status}" визнано успішним (з браузера)`);
+            // Навіть якщо статус "paid" ще не записаний, ми можемо перенаправити на успіх,
+            // оскільки сторінка success.html не дає доступу до курсу, а лише інформує.
             return res.redirect(`/success.html?order_id=${orderReference}`);
         } else {
             const errorInfo = reason || reasonCode || status || 'unknown';
