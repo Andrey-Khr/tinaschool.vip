@@ -394,7 +394,6 @@ app.post('/server-callback', async (req, res) => {
 // Маршрут для обробки returnUrl та failUrl від WayForPay
 app.post('/payment-return', (req, res) => {
 
-    console.log('⚠️ Отримано POST /payment-return');
     console.log('📦 Тіло запиту:', req.body);
     console.log('📄 Статус з WayForPay:', req.body.status);
 
@@ -418,8 +417,8 @@ app.post('/payment-return', (req, res) => {
             res.redirect(`/failure.html?order_id=${orderReference}&error=${encodeURIComponent(errorInfo)}`);
         }
     } catch (error) {
-        console.error('❌ Помилка обробки payment return:', error);
-        res.redirect('/failure.html?error=processing_error');
+console.error('❌ Помилка обробки payment return:', error);
+console.trace(error);
     }
 });
 
