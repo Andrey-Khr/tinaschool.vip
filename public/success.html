@@ -2,13 +2,94 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Оплата успішна</title>
+    <title>Оплата успішна - TinaSchool</title>
     <link href="/styles.css" rel="stylesheet">
+    <style>
+        .success-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+        .telegram-button {
+            display: inline-block;
+            background: #0088cc;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+        .telegram-button:hover {
+            background: #006699;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .order-info {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
-    <div class="form-container"> <h2 style="background: linear-gradient(45deg, #2ed573, #1dd1a1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Оплата пройшла успішно!</h2>
-        <p style="color: #2d3436; font-size: 18px; margin-bottom: 30px;">Дякуємо за покупку! Деталі курсу та інструкції надіслано на ваш email.</p>
-        <a href="/" class="submit-btn" style="display: inline-block; width: auto; padding: 15px 30px; border-radius: 15px; text-decoration: none;">Повернутись на головну</a>
+    <div class="success-container">
+        <div class="success-icon">🎉</div>
+        <h1>Оплата успішна!</h1>
+        <p style="font-size: 18px; margin-bottom: 30px;">
+            Дякуємо за покупку курсу! Ваше замовлення успішно оплачено.
+        </p>
+        
+        <div class="order-info">
+            <h3>📋 Що далі?</h3>
+            <p>1. Перевірте вашу електронну пошту - ми надіслали підтвердження</p>
+            <p>2. Перейдіть в телеграм бот для отримання доступу до курсу</p>
+        </div>
+
+        <a href="https://t.me/Tinas_cursuribot" class="telegram-button" target="_blank">
+            🤖 Перейти в телеграм бот
+        </a>
+
+        <div style="margin-top: 30px;">
+            <p style="font-size: 14px; opacity: 0.8;">
+                Номер замовлення: <span id="orderId">завантажується...</span>
+            </p>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <a href="/" style="color: white; text-decoration: underline;">
+                ← Повернутися на головну
+            </a>
+        </div>
     </div>
+
+    <script>
+        // Отримуємо order_id з URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('order_id');
+        
+        if (orderId) {
+            document.getElementById('orderId').textContent = orderId;
+        } else {
+            document.getElementById('orderId').textContent = 'не знайдено';
+        }
+    </script>
 </body>
 </html>

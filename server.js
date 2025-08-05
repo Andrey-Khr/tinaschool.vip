@@ -308,8 +308,8 @@ app.post('/create-payment', paymentLimiter, async (req, res) => {
             clientName: name,
             clientEmail: email,
             serviceUrl: `${baseUrl}/server-callback`,
-            returnUrl: `${baseUrl}/public/status.html?order_id=${courseData.orderId}`,
-            failUrl: `${baseUrl}/public/status.html?order_id=${courseData.orderId}`,
+            returnUrl: `${baseUrl}/payment-return`,
+            failUrl: `${baseUrl}/payment-return`,
             signature: merchantSignature
         });
 
@@ -391,6 +391,52 @@ app.post('/server-callback', async (req, res) => {
     }
 });
 
+// Маршрут для обробки returnUrl та failUrl від WayForPay
+app.post('/payment-return', (req, res) => {
+    try {
+        const { orderReference, status } = req.body;
+        console.log(`📄 Payment return: ${orderReference}, статус: ${status}`);
+        
+        // Перенаправляємо на статичну HTML сторінку з параметрами
+        if (status === 'accept' || status === 'accept_ok') {
+            res.redirect(`/success.html?order_id=${orderReference}`);
+        } else {
+            res.redirect(`/failure.html?order_id=${orderReference}`);
+        }
+    } catch (error) {
+        console.error('❌ Помилка обробки payment return:', error);
+        res.redirect('/failure.html');
+    }
+});
+
+// Маршрут для перевірки статусу оплати (використовується в status.html)  
+app.get('/get-payment-status', (req, res) => {
+    try {
+        const { order_id } = req.query;
+        
+        if (!order_id) {
+            return res.status(400).json({ error: 'Order ID не вказано' });
+        }
+
+        const allOrders = readOrders();
+        const order = allOrders.orders[order_id];
+
+        if (!order) {
+            return res.status(404).json({ error: 'Замовлення не знайдено' });
+        }
+
+        // Повертаємо статус замовлення
+        res.json({
+            status: order.status === 'paid' ? 'accept' : order.status || 'pending',
+            orderId: order_id,
+            courseName: order.courseName
+        });
+
+    } catch (error) {
+        console.error('❌ Помилка отримання статусу:', error);
+        res.status(500).json({ error: 'Внутрішня помилка сервера' });
+    }
+});
 // Graceful shutdown
 process.on('SIGTERM', () => {
     console.log('🔄 Отримано сигнал SIGTERM, завершення роботи...');
