@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Перевірка статусу оплати - TinaSchool</title>
+    <link href="/styles.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+        .status-container {
+            max-width: 500px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            text-align: center;
+            color: #2d3436;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 8px solid #6c5ce7;
+            width: 60px;
+            height: 60px;
+            animation: spin 1.5s linear infinite;
+            margin: 0 auto 25px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h1 {
+            font-size: 24px;
+            color: #6c5ce7;
+            margin-bottom: 15px;
+        }
+        p {
+            font-size: 16px;
+        }
+        #orderId {
+            font-weight: bold;
+            color: #e17055;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-container">
+        <div class="loader"></div>
+        <h1>Перевіряємо статус вашої оплати...</h1>
+        <p>Це може зайняти до 30 секунд. Будь ласка, не закривайте сторінку.</p>
+        <p>Номер вашого замовлення: <span id="orderId"></span></p>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('order_id');
+        const orderIdElement = document.getElementById('orderId');
+
+        if (orderId) {
+            orderIdElement.textContent = orderId;
+            let attempts = 0;
+            const maxAttempts = 15; // 15 спроб * 2 секунди = 30 секунд
+
+            const checkStatus = setInterval(async () => {
+                attempts++;
+                if (attempts > maxAttempts) {
+                    clearInterval(checkStatus);
+                    window.location.href = `/failure.html?order_id=${orderId}&error=timeout`;
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/get-payment-status?order_id=${orderId}`);
+                    if (!response.ok) {
+                        // Якщо сервер повернув помилку, зупиняємо перевірку
+                        clearInterval(checkStatus);
+                        window.location.href = `/failure.html?order_id=${orderId}&error=server_error`;
+                        return;
+                    }
+
+                    const data = await response.json();
+
+                    if (data.status === 'accept' || data.status === 'paid') {
+                        clearInterval(checkStatus);
+                        window.location.href = `/success.html?order_id=${orderId}`;
+                    } else if (data.status === 'declined' || data.status === 'failed') {
+                        clearInterval(checkStatus);
+                        window.location.href = `/failure.html?order_id=${orderId}&error=${data.status}`;
+                    }
+                    // Якщо статус 'pending', нічого не робимо і чекаємо наступної перевірки
+
+                } catch (error) {
+                    console.error('Помилка перевірки статусу:', error);
+                    clearInterval(checkStatus);
+                    window.location.href = `/failure.html?order_id=${orderId}&error=network_error`;
+                }
+            }, 2000); // Перевіряти кожні 2 секунди
+        } else {
+            orderIdElement.textContent = 'не знайдено';
+            // Якщо ID замовлення відсутній, відправляємо на сторінку помилки
+            window.location.href = '/failure.html?error=no_order_id';
+        }
+    </script>
+</body>
+</html>
