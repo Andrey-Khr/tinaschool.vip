@@ -393,6 +393,12 @@ app.post('/server-callback', async (req, res) => {
 
 // Маршрут для обробки returnUrl та failUrl від WayForPay
 app.post('/payment-return', (req, res) => {
+
+    console.log('⚠️ Отримано POST /payment-return');
+    console.log('📦 Тіло запиту:', req.body);
+    console.log('📄 Статус з WayForPay:', req.body.status);
+
+
     try {
         const { orderReference, status, reasonCode, reason } = req.body;
         console.log(`📄 Payment return: ${orderReference}, статус: ${status}`);
