@@ -394,18 +394,26 @@ app.post('/server-callback', async (req, res) => {
 // Маршрут для обробки returnUrl та failUrl від WayForPay
 app.post('/payment-return', (req, res) => {
     try {
-        const { orderReference, status } = req.body;
+        const { orderReference, status, reasonCode, reason } = req.body;
         console.log(`📄 Payment return: ${orderReference}, статус: ${status}`);
         
-        // Перенаправляємо на статичну HTML сторінку з параметрами
-        if (status === 'accept' || status === 'accept_ok') {
+        if (!orderReference) {
+            return res.redirect('/failure.html?error=missing_order_id');
+        }
+
+        // Розширений список успішних статусів
+        const successStatuses = ['accept', 'accept_ok', 'accepted', 'success', 'approved'];
+        const isSuccess = successStatuses.includes(status?.toLowerCase());
+
+        if (isSuccess) {
             res.redirect(`/success.html?order_id=${orderReference}`);
         } else {
-            res.redirect(`/failure.html?order_id=${orderReference}`);
+            const errorInfo = reason || reasonCode || status || 'unknown';
+            res.redirect(`/failure.html?order_id=${orderReference}&error=${encodeURIComponent(errorInfo)}`);
         }
     } catch (error) {
         console.error('❌ Помилка обробки payment return:', error);
-        res.redirect('/failure.html');
+        res.redirect('/failure.html?error=processing_error');
     }
 });
 
