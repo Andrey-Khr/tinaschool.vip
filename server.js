@@ -205,7 +205,7 @@ async function sendAdminNotification(email, name, courseName, orderId, price) {
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.json({ type: '*/*' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.set('view engine', 'ejs');
