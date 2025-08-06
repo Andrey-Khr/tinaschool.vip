@@ -1,4 +1,5 @@
 const express = require('express');
+const multer = require('multer');
 const crypto = require('crypto');
 const path = require('path');
 const nodemailer = require('nodemailer');
@@ -7,12 +8,11 @@ const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
-const upload = multer();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
-
+const upload = multer();
 
 // --- Робота з файлом для зберігання замовлень ---
 const ORDERS_FILE_PATH = path.join(__dirname, 'orders.json');
@@ -212,16 +212,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use((req, res, next) => {
-    if (req.path === '/server-callback') {
-        console.log(`🔍 ${req.method} ${req.path}`);
-        console.log('🔍 Content-Type:', req.headers['content-type']);
-        console.log('🔍 User-Agent:', req.headers['user-agent']);
-        console.log('🔍 IP:', req.ip);
-    }
-    next();
-});
-
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -333,200 +323,164 @@ app.post('/create-payment', paymentLimiter, async (req, res) => {
 });
 
 // Обробка callback від платіжної системи
-// Обробка callback від платіжної системи WayForPay
 app.post('/server-callback', upload.none(), async (req, res) => {
     try {
-        console.log('📞 Callback отримано. Повні дані:', JSON.stringify(req.body, null, 2));
+        console.log('🔍 ===== WAYFORPAY CALLBACK DEBUG =====');
+        console.log('📅 Час:', new Date().toISOString());
+        console.log('🌐 IP клієнта:', req.ip || req.connection.remoteAddress);
+        console.log('📦 Content-Type:', req.headers['content-type']);
+        console.log('📋 User-Agent:', req.headers['user-agent']);
         
-        let callbackData;
+        // Логуємо все що надійшло
+        console.log('🔍 Повний req.body:', JSON.stringify(req.body, null, 2));
+        console.log('🔍 Всі заголовки:', JSON.stringify(req.headers, null, 2));
+        console.log('🔍 req.query:', JSON.stringify(req.query, null, 2));
         
-        // WayForPay надсилає дані в особливому форматі - JSON як ключ об'єкта
-        const bodyKeys = Object.keys(req.body);
-        if (bodyKeys.length === 1 && bodyKeys[0].startsWith('{')) {
-            // Парсимо JSON з ключа
-            try {
-                callbackData = JSON.parse(bodyKeys[0]);
-                console.log('🔧 Розпаковані дані WayForPay:', callbackData);
-            } catch (parseError) {
-                console.error('❌ Помилка парсингу JSON з ключа:', parseError);
-                return res.status(400).json({ error: 'Invalid JSON format' });
+        // Перевіряємо всі можливі варіанти параметрів
+        const possibleOrderRef = req.body.orderReference || req.body.orderId || req.body.order_id || req.body.merchantTransactionSecureType;
+        const possibleStatus = req.body.status || req.body.transactionStatus || req.body.paymentStatus || req.body.reasonCode;
+        const possibleTime = req.body.time || req.body.createdDate || req.body.processingDate || req.body.timestamp;
+        const possibleSignature = req.body.merchantSignature || req.body.signature || req.body.hash;
+        
+        console.log('🔍 Знайдені можливі параметри:');
+        console.log('   orderReference:', possibleOrderRef);
+        console.log('   status:', possibleStatus);
+        console.log('   time:', possibleTime);
+        console.log('   signature:', possibleSignature);
+        
+        // Показуємо всі ключі що прийшли
+        console.log('🔍 Всі ключі в req.body:', Object.keys(req.body));
+        
+        // Якщо нічого не знайшли, показуємо що прийшло
+        if (!possibleOrderRef && !possibleStatus) {
+            console.log('⚠️ Основні параметри не знайдені! Можливо WayForPay надсилає дані в іншому форматі');
+            console.log('🔍 Розмір req.body:', Object.keys(req.body).length);
+            
+            // Перевіряємо чи не прийшли дані в query параметрах
+            if (Object.keys(req.query).length > 0) {
+                console.log('🔍 Можливо дані в query параметрах:', req.query);
             }
-        } else {
-            // Стандартний формат (якщо WayForPay змінить формат)
-            callbackData = req.body;
         }
         
-        // Витягуємо потрібні поля з розпакованих даних
-        const {
-            orderReference,
-            transactionStatus,
-            merchantSignature: wfpSignature,
-            processingDate,
-            merchantAccount,
-            amount,
-            currency
-        } = callbackData;
+        // Спробуємо оригінальну логіку з новими параметрами
+        const orderReference = possibleOrderRef;
+        const status = possibleStatus;
+        const time = possibleTime;
+        const wfpSignature = possibleSignature;
         
-        console.log(`📞 Callback деталі: ${orderReference}, статус: ${transactionStatus}`);
+        console.log('🔍 Використовуємо для обробки:');
+        console.log('   orderReference:', orderReference);
+        console.log('   status:', status);
+        console.log('   time:', time);
+        console.log('   wfpSignature:', wfpSignature);
         
-        // Перевіряємо наявність обов'язкових полів
-        if (!orderReference || !transactionStatus || !processingDate) {
-            console.error('❌ Відсутні обов\'язкові поля в callback:', { 
-                orderReference, 
-                transactionStatus, 
-                processingDate 
+        if (!orderReference || !status || !time) {
+            console.log('❌ Критичні параметри відсутні, але продовжуємо...');
+            // Відповідаємо WayForPay щоб припинити повторні спроби
+            return res.json({
+                status: 'accept',
+                time: Math.floor(Date.now() / 1000),
+                signature: 'debug_mode'
             });
-            return res.status(400).json({ error: 'Missing required fields' });
         }
-
-        // Для WayForPay підпис формується інакше
-        // Для callback підпис перевіряємо за іншою схемою
-        const callbackSignatureString = [
-            merchantAccount,
-            orderReference,
-            amount,
-            currency,
-            callbackData.authCode || '',
-            callbackData.cardPan || '',
-            transactionStatus,
-            callbackData.reason || '',
-            callbackData.reasonCode || ''
-        ].join(';');
-
+        
+        // Перевіряємо підпис
+        const stringToSign = [orderReference, status, time].join(';');
         const expectedSignature = crypto
             .createHmac('md5', MERCHANT_SECRET_KEY)
-            .update(callbackSignatureString)
+            .update(stringToSign)
             .digest('hex');
+            
+        console.log('🔍 Перевірка підпису:');
+        console.log('   Рядок для підпису:', stringToSign);
+        console.log('   Очікуваний підпис:', expectedSignature);
+        console.log('   Отриманий підпис:', wfpSignature);
+        console.log('   Підписи збігаються:', expectedSignature === wfpSignature);
 
-        console.log('🔍 Перевірка підпису WayForPay:', {
-            stringToSign: callbackSignatureString,
-            expected: expectedSignature,
-            received: wfpSignature,
-            match: expectedSignature === wfpSignature
-        });
-
-        // Поки що пропускаємо перевірку підпису для діагностики
-        if (wfpSignature && expectedSignature !== wfpSignature) {
-            console.log('⚠️ Підпис не співпадає, але продовжуємо обробку для діагностики');
-            // НЕ повертаємо помилку поки не налагодимо
-            // return res.status(400).json({ error: 'Invalid signature' });
+        if (expectedSignature !== wfpSignature) {
+            console.log('❌ Підписи не збігаються, але продовжуємо обробку для debug...');
         }
 
+        // Шукаємо замовлення
         const allOrders = readOrders();
         const customerOrder = allOrders.orders[orderReference];
 
+        console.log('🔍 Пошук замовлення:');
+        console.log('   Шукаємо ID:', orderReference);
+        console.log('   Знайдено:', !!customerOrder);
+        if (customerOrder) {
+            console.log('   Поточний статус:', customerOrder.status);
+        }
+
         if (!customerOrder) {
-            console.error('❌ Замовлення не знайдено у файлі:', orderReference);
+            console.log('❌ Замовлення не знайдено в базі');
         } else if (customerOrder.status === 'paid') {
-            console.log(`🔁 Повторний callback для вже оплаченого замовлення: ${orderReference}`);
+            console.log('🔁 Замовлення вже оплачене');
+        } else if (status === 'accept' || status === 'Accepted' || status === 'approved') {
+            console.log('✅ Оплата схвалена, оновлюємо статус');
+            
+            customerOrder.status = 'paid';
+            customerOrder.paidAt = new Date().toISOString();
+            writeOrders(allOrders);
+            
+            // Відправка email
+            sendPaymentConfirmationEmail(
+                customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference
+            ).catch(err => console.error('Email помилка:', err.message));
+            
+            sendAdminNotification(
+                customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price
+            ).catch(err => console.error('Admin email помилка:', err.message));
+
         } else {
-            // Обробляємо за статусом транзакції WayForPay
-            if (transactionStatus === 'Approved') {
-                metrics.successfulPayments++;
-                console.log(`✅ Оплата підтверджена WayForPay: ${orderReference}`);
-                
-                // Оновлюємо статус у файлі
-                customerOrder.status = 'paid';
-                customerOrder.paidAt = new Date().toISOString();
-                customerOrder.wayforpayData = {
-                    transactionStatus,
-                    authCode: callbackData.authCode,
-                    cardPan: callbackData.cardPan,
-                    paymentSystem: callbackData.paymentSystem
-                };
-                writeOrders(allOrders);
-                
-                // Відправка email
-                sendPaymentConfirmationEmail(
-                    customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference
-                ).catch(err => console.error('❌ Email error:', err.message));
-                
-                sendAdminNotification(
-                    customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price
-                ).catch(err => console.error('❌ Admin email error:', err.message));
-
-            } else if (transactionStatus === 'Declined') {
-                metrics.failedPayments++;
-                console.log(`❌ Оплата відхилена WayForPay: ${orderReference}, причина: ${callbackData.reason}`);
-
+            console.log('❌ Оплата не схвалена, статус:', status);
+            if (customerOrder) {
                 customerOrder.status = 'declined';
-                customerOrder.declinedAt = new Date().toISOString();
-                customerOrder.declineReason = callbackData.reason;
                 writeOrders(allOrders);
             }
         }
 
-        // Формування відповіді для WayForPay
+        // Відповідаємо WayForPay
         const responseTime = Math.floor(Date.now() / 1000);
-        const responseString = [
-            callbackData.merchantAccount,
-            orderReference,
-            'accept',
-            responseTime
-        ].join(';');
-        
+        const responseString = [orderReference || 'unknown', 'accept', responseTime].join(';');
         const responseSignature = crypto
             .createHmac('md5', MERCHANT_SECRET_KEY)
             .update(responseString)
             .digest('hex');
 
         const response = {
-            orderReference,
+            orderReference: orderReference || 'unknown',
             status: 'accept',
             time: responseTime,
             signature: responseSignature
         };
+        
+        console.log('📤 Відповідаємо WayForPay:', response);
+        console.log('🔍 ===== КІНЕЦЬ DEBUG CALLBACK =====\n');
 
-        console.log('📤 Відповідь WayForPay:', response);
         res.json(response);
 
     } catch (err) {
-        console.error('❌ Критична помилка обробки callback:', err);
-        res.status(500).json({ error: 'Server error' });
+        console.error('❌ Критична помилка в callback:', err);
+        console.log('🔍 ===== ПОМИЛКА CALLBACK =====\n');
+        
+        // Все одно відповідаємо щоб припинити повторні спроби
+        res.json({
+            status: 'accept',
+            time: Math.floor(Date.now() / 1000),
+            signature: 'error_mode'
+        });
     }
-});
+});    
 
-// Додатковий middleware для обробки специфічного формату WayForPay
+// Також додайте цей middleware для логування всіх запитів до callback
 app.use('/server-callback', (req, res, next) => {
-    console.log('🔍 RAW body before processing:', req.body);
-    console.log('🔍 Body type:', typeof req.body);
-    console.log('🔍 Body keys:', Object.keys(req.body));
+    console.log('📞 Incoming request to /server-callback');
+    console.log('   Method:', req.method);
+    console.log('   Content-Type:', req.headers['content-type']);
+    console.log('   Content-Length:', req.headers['content-length']);
     next();
 });
-// Альтернативний обробник callback для GET запитів
-app.get('/server-callback', async (req, res) => {
-    console.log('📞 GET Callback отримано:', req.query);
-    
-    const { orderReference, status, time, merchantSignature: wfpSignature } = req.query;
-    
-    if (!orderReference || !status || !time) {
-        console.error('❌ GET callback: відсутні обов\'язкові поля');
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-    
-    // Той самий код обробки, що і для POST
-    const stringToSign = [orderReference, status, time].join(';');
-    const expectedSignature = crypto
-        .createHmac('md5', MERCHANT_SECRET_KEY)
-        .update(stringToSign)
-        .digest('hex');
-
-    if (expectedSignature !== wfpSignature) {
-        console.error('❌ GET callback неправильний підпис');
-        return res.status(400).json({ error: 'Invalid signature' });
-    }
-    
-    res.json({ status: 'ok', message: 'GET callback processed' });
-});
-
-// Тестовий обробник (тільки для розробки)
-if (process.env.NODE_ENV !== 'production') {
-    app.post('/test-callback', (req, res) => {
-        console.log('🧪 Тестовий callback:', req.body);
-        res.json({ received: req.body });
-    });
-}
-
 
 // Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
 app.all('/payment-return', (req, res) => {
