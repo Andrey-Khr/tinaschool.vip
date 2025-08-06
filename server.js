@@ -264,33 +264,19 @@ app.post('/server-callback', upload.none(), async (req, res) => {
         const signature = paymentData.merchantSignature || paymentData.signature || paymentData.hash;
 
         if (!orderReference || !status || !time || !signature) {
-            console.warn('⚠️ Деякі параметри відсутні');
+            console.warn('⚠️ Деякі параметри відсутні в callback-запиті. Неможливо перевірити підпис.');
         }
 
-        // Визначаємо рядок для підпису згідно з форматом WayForPay
-        let stringToSign, expectedSignature;
-        if (paymentData.amount && paymentData.currency && paymentData.merchantAccount) {
-            // Callback підпис
-            stringToSign = [
-                paymentData.merchantAccount,
-                orderReference,
-                paymentData.amount,
-                paymentData.currency
-            ].join(';');
+        // --- ВИПРАВЛЕНА ЛОГІКА ПІДПИСУ ---
+        // ЗАВЖДИ використовуємо стандартну формулу для перевірки відповіді від WayForPay
+        // Це усуває попередню помилку з неправильним вибором полів для підпису.
+        const stringToSign = [orderReference, status, time].join(';');
 
-            expectedSignature = crypto
-                .createHmac('md5', MERCHANT_SECRET_KEY)
-                .update(stringToSign)
-                .digest('hex');
-        } else {
-            // Fallback: [orderReference;status;time]
-            stringToSign = [orderReference, status, time].join(';');
-
-            expectedSignature = crypto
-                .createHmac('md5', MERCHANT_SECRET_KEY)
-                .update(stringToSign)
-                .digest('hex');
-        }
+        const expectedSignature = crypto
+            .createHmac('md5', MERCHANT_SECRET_KEY)
+            .update(stringToSign)
+            .digest('hex');
+        // --- КІНЕЦЬ ВИПРАВЛЕНОЇ ЛОГІКИ ---
 
         console.log('🔍 Перевірка підпису:');
         console.log('   Рядок для підпису:', stringToSign);
@@ -304,15 +290,16 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             
         } else {
             // ✅ УСПІШНА ПЕРЕВІРКА. ТІЛЬКИ ТЕПЕР МОЖНА ОБРОБЛЯТИ ЗАМОВЛЕННЯ.
+            console.log('✅ Підпис вірний. Продовжуємо обробку замовлення.');
             const allOrders = readOrders();
             const customerOrder = allOrders.orders[orderReference];
 
             if (!customerOrder) {
-                console.error('❌ Замовлення не знайдено:', orderReference);
+                console.error('❌ Замовлення не знайдено в базі:', orderReference);
             } else if (customerOrder.status === 'paid') {
-                console.log('🔁 Замовлення вже оплачено. Повторна обробка не потрібна.');
+                console.log('🔁 Замовлення вже було оплачено. Повторна обробка не потрібна.');
             } else if (status === 'accept' || status === 'Accepted' || status === 'Approved' || status === 'approved') {
-                console.log('✅ Оплата підтверджена. Підпис вірний.');
+                console.log('✅ Статус оплати підтверджено.');
 
                 // Оновлюємо статус замовлення
                 customerOrder.status = 'paid';
@@ -326,7 +313,7 @@ app.post('/server-callback', upload.none(), async (req, res) => {
                     customerOrder.name,
                     customerOrder.courseName,
                     orderReference
-                ).catch(err => console.error('❌ Email помилка:', err.message));
+                ).catch(err => console.error('❌ Помилка відправки email клієнту:', err.message));
 
                 // Надсилаємо email адміністратору
                 sendAdminNotification(
@@ -335,11 +322,11 @@ app.post('/server-callback', upload.none(), async (req, res) => {
                     customerOrder.courseName,
                     orderReference,
                     customerOrder.price
-                ).catch(err => console.error('❌ Admin email помилка:', err.message));
+                ).catch(err => console.error('❌ Помилка відправки email адміністратору:', err.message));
 
                 metrics.successfulPayments++;
             } else {
-                console.warn(`❌ Оплата відхилена. Статус: ${status}`);
+                console.warn(`⚠️ Оплата не успішна. Статус від WayForPay: ${status}`);
                 if (customerOrder) {
                     customerOrder.status = 'declined';
                     customerOrder.wayforpayData = paymentData;
@@ -349,7 +336,8 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             }
         }
 
-        // Код для відповіді WayForPay залишається тут, він має виконатись у будь-якому випадку
+        // Код для відповіді WayForPay залишається тут, він має виконатись у будь-якому випадку,
+        // щоб платіжна система припинила надсилати повторні запити.
         const responseTime = Math.floor(Date.now() / 1000);
         const responseStr = [orderReference || 'unknown', 'accept', responseTime].join(';');
         const responseSignature = crypto
@@ -470,14 +458,20 @@ app.post('/create-payment', (req, res) => {
 // Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
 app.all('/payment-return', (req, res) => {
     try {
-        // Спочатку перевіряємо req.query, потім req.body
+        console.log(`➡️ Користувач повернувся на сайт. Метод: ${req.method}.`);
+        
+        // Спочатку перевіряємо req.query (для GET-запитів), потім req.body (для POST).
         const orderId = req.query.orderReference || (req.body && req.body.orderReference);
 
         if (!orderId) {
             console.error('❌ WayForPay не повернув orderReference при поверненні клієнта.');
+            // Якщо ID замовлення немає, перенаправляємо на сторінку загальної помилки.
             return res.redirect('/failure.html?error=no_order_id_returned');
         }
 
+        console.log(`⏳ Користувач повернувся для замовлення: ${orderId}. Перенаправлення на сторінку перевірки статусу.`);
+        
+        // Перенаправляємо на сторінку статусу з КОНКРЕТНИМ ID замовлення
         res.redirect(`/status.html?order_id=${orderId}`);
 
     } catch (error) {
