@@ -299,53 +299,57 @@ app.post('/server-callback', upload.none(), async (req, res) => {
         console.log('   Підписи збігаються:', expectedSignature === signature);
 
         if (expectedSignature !== signature) {
-            console.warn('❌ Неправильний підпис, але відповідаємо accept для припинення ретраїв');
-        }
-
-        const allOrders = readOrders();
-        const customerOrder = allOrders.orders[orderReference];
-
-        if (!customerOrder) {
-            console.error('❌ Замовлення не знайдено:', orderReference);
-        } else if (customerOrder.status === 'paid') {
-            console.log('🔁 Замовлення вже оплачено');
-        } else if (status === 'accept' || status === 'Accepted' || status === 'Approved' || status === 'approved') {
-            console.log('✅ Оплата підтверджена');
-
-            customerOrder.status = 'paid';
-            customerOrder.paidAt = new Date().toISOString();
-            customerOrder.wayforpayData = paymentData;
-            writeOrders(allOrders);
-
-            // Email клієнту
-            sendPaymentConfirmationEmail(
-                customerOrder.email,
-                customerOrder.name,
-                customerOrder.courseName,
-                orderReference
-            ).catch(err => console.error('❌ Email помилка:', err.message));
-
-            // Email адміністратору
-            sendAdminNotification(
-                customerOrder.email,
-                customerOrder.name,
-                customerOrder.courseName,
-                orderReference,
-                customerOrder.price
-            ).catch(err => console.error('❌ Admin email помилка:', err.message));
-
-            metrics.successfulPayments++;
+            console.warn('❌ Неправильний підпис. Обробку зупинено.');
+            // Нічого більше не робимо. Замовлення не підтверджується.
+            
         } else {
-            console.warn(`❌ Оплата відхилена. Статус: ${status}`);
-            if (customerOrder) {
-                customerOrder.status = 'declined';
+            // ✅ УСПІШНА ПЕРЕВІРКА. ТІЛЬКИ ТЕПЕР МОЖНА ОБРОБЛЯТИ ЗАМОВЛЕННЯ.
+            const allOrders = readOrders();
+            const customerOrder = allOrders.orders[orderReference];
+
+            if (!customerOrder) {
+                console.error('❌ Замовлення не знайдено:', orderReference);
+            } else if (customerOrder.status === 'paid') {
+                console.log('🔁 Замовлення вже оплачено. Повторна обробка не потрібна.');
+            } else if (status === 'accept' || status === 'Accepted' || status === 'Approved' || status === 'approved') {
+                console.log('✅ Оплата підтверджена. Підпис вірний.');
+
+                // Оновлюємо статус замовлення
+                customerOrder.status = 'paid';
+                customerOrder.paidAt = new Date().toISOString();
                 customerOrder.wayforpayData = paymentData;
                 writeOrders(allOrders);
+
+                // Надсилаємо email клієнту
+                sendPaymentConfirmationEmail(
+                    customerOrder.email,
+                    customerOrder.name,
+                    customerOrder.courseName,
+                    orderReference
+                ).catch(err => console.error('❌ Email помилка:', err.message));
+
+                // Надсилаємо email адміністратору
+                sendAdminNotification(
+                    customerOrder.email,
+                    customerOrder.name,
+                    customerOrder.courseName,
+                    orderReference,
+                    customerOrder.price
+                ).catch(err => console.error('❌ Admin email помилка:', err.message));
+
+                metrics.successfulPayments++;
+            } else {
+                console.warn(`❌ Оплата відхилена. Статус: ${status}`);
+                if (customerOrder) {
+                    customerOrder.status = 'declined';
+                    customerOrder.wayforpayData = paymentData;
+                    writeOrders(allOrders);
+                }
+                metrics.failedPayments++;
             }
-            metrics.failedPayments++;
         }
 
-        // Відповідаємо WayForPay
+        // Код для відповіді WayForPay залишається тут, він має виконатись у будь-якому випадку
         const responseTime = Math.floor(Date.now() / 1000);
         const responseStr = [orderReference || 'unknown', 'accept', responseTime].join(';');
         const responseSignature = crypto
@@ -466,18 +470,14 @@ app.post('/create-payment', (req, res) => {
 // Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
 app.all('/payment-return', (req, res) => {
     try {
-        // WayForPay має повернути orderReference у query або body
-        const orderId = req.body.orderReference || req.query.orderReference;
+        // Спочатку перевіряємо req.query, потім req.body
+        const orderId = req.query.orderReference || (req.body && req.body.orderReference);
 
         if (!orderId) {
-            console.error('❌ WayForPay did not return an orderReference.');
-            // Перенаправити на сторінку помилки, якщо ID не знайдено
+            console.error('❌ WayForPay не повернув orderReference при поверненні клієнта.');
             return res.redirect('/failure.html?error=no_order_id_returned');
         }
 
-        console.log(`⏳ Користувач повернувся для замовлення: ${orderId}. Перенаправлення на сторінку перевірки статусу.`);
-
-        // Перенаправити на сторінку статусу з КОНКРЕТНИМ ID замовлення
         res.redirect(`/status.html?order_id=${orderId}`);
 
     } catch (error) {
