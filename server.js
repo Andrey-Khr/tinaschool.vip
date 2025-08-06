@@ -1,5 +1,4 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const crypto = require('crypto');
 const path = require('path');
 const nodemailer = require('nodemailer');
@@ -205,7 +204,7 @@ async function sendAdminNotification(email, name, courseName, orderId, price) {
 }
 
 // Middleware
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -213,10 +212,10 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Маршрути
-app.get('/', (req, res) => {
+/*app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
-
+*/
 // Маршрут для статистики
 app.get('/stats', (req, res) => {
     const uptime = Date.now() - metrics.startTime;
