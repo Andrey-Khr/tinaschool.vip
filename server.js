@@ -8,11 +8,12 @@ const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
+const upload = multer();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
-const upload = multer();
+
 
 // --- Робота з файлом для зберігання замовлень ---
 const ORDERS_FILE_PATH = path.join(__dirname, 'orders.json');
