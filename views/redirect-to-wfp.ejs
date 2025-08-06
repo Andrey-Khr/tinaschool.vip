@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Перенаправлення на сторінку оплати...</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; background-color: #f5f5f5; }
+        .spinner { border: 4px solid rgba(0,0,0,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #09f; animation: spin 1s ease infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body onload="document.getElementById('wfp-form').submit();">
+    <div class="spinner"></div>
+    <p>Зачекайте, перенаправляємо вас на сторінку оплати...</p>
+
+    <form id="wfp-form" action="https://secure.wayforpay.com/pay" method="POST" style="display: none;">
+        <input type="hidden" name="merchantAccount" value="<%= merchantAccount %>">
+        <input type="hidden" name="merchantDomainName" value="<%= merchantDomainName %>">
+        <input type="hidden" name="authorizationType" value="SimpleSignature">
+        <input type="hidden" name="orderReference" value="<%= orderReference %>">
+        <input type="hidden" name="orderDate" value="<%= orderDate %>">
+        <input type="hidden" name="amount" value="<%= amount %>">
+        <input type="hidden" name="currency" value="<%= currency %>">
+        
+        <% for(let i=0; i < productName.length; i++) { %>
+            <input type="hidden" name="productName[]" value="<%= productName[i] %>">
+            <input type="hidden" name="productCount[]" value="<%= productCount[i] %>">
+            <input type="hidden" name="productPrice[]" value="<%= productPrice[i] %>">
+        <% } %>
+
+        <input type="hidden" name="serviceUrl" value="<%= serviceUrl %>">
+        <input type="hidden" name="returnUrl" value="<%= returnUrl %>">
+        <input type="hidden" name="merchantSignature" value="<%= merchantSignature %>">
+    </form>
+</body>
+</html>
