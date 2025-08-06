@@ -235,136 +235,79 @@ app.post('/server-callback', upload.none(), async (req, res) => {
     try {
         console.log('📞 Callback отримано від WayForPay');
         console.log('📅 Час:', new Date().toISOString());
-        console.log('🌐 IP клієнта:', req.ip || req.connection.remoteAddress);
-        console.log('📦 Content-Type:', req.headers['content-type']);
-        console.log('🔍 Повний req.body:', JSON.stringify(req.body, null, 2));
-
-        // Визначаємо формат запиту (WayForPay іноді надсилає JSON як ключ об'єкта)
-        const isWrappedJson = Object.keys(req.body).length === 1 && typeof Object.keys(req.body)[0] === 'string' && req.body[Object.keys(req.body)[0]] === '';
 
         let paymentData;
-
-        if (isWrappedJson) {
-            const jsonKey = Object.keys(req.body)[0];
+        if (Object.keys(req.body).length === 1 && typeof Object.keys(req.body)[0] === 'string') {
             try {
-                paymentData = JSON.parse(jsonKey);
+                paymentData = JSON.parse(Object.keys(req.body)[0]);
                 console.log('✅ JSON успішно розпарсено з ключа');
-            } catch (parseError) {
-                console.error('❌ Помилка парсингу JSON:', parseError.message);
-                return res.status(400).json({ error: 'Invalid JSON format' });
+            } catch (e) {
+                paymentData = req.body;
             }
         } else {
             paymentData = req.body;
         }
+        console.log('🔍 Отримані дані:', JSON.stringify(paymentData, null, 2));
 
-        // Витягуємо потрібні дані
-        const orderReference = paymentData.orderReference;
-        const status = paymentData.status || paymentData.transactionStatus;
-        const time = paymentData.time || paymentData.createdDate;
-        const signature = paymentData.merchantSignature || paymentData.signature || paymentData.hash;
+        const { orderReference, transactionStatus, createdDate, merchantSignature } = paymentData;
 
-        if (!orderReference || !status || !time || !signature) {
-            console.warn('⚠️ Деякі параметри відсутні в callback-запиті. Неможливо перевірити підпис.');
+        if (!orderReference || !transactionStatus || !createdDate || !merchantSignature) {
+            console.warn('⚠️ Відсутні необхідні поля в callback-запиті.');
+            return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // --- ВИПРАВЛЕНА ЛОГІКА ПІДПИСУ ---
-        // ЗАВЖДИ використовуємо стандартну формулу для перевірки відповіді від WayForPay
-        // Це усуває попередню помилку з неправильним вибором полів для підпису.
-        const stringToSign = [orderReference, status, time].join(';');
+        // --- ФІНАЛЬНЕ ВИПРАВЛЕННЯ: Гарантуємо, що всі частини є рядками ---
+        const stringToSign = [
+            String(orderReference), 
+            String(transactionStatus), 
+            String(createdDate)
+        ].join(';');
+        // --- КІНЕЦЬ ФІНАЛЬНОГО ВИПРАВЛЕННЯ ---
 
         const expectedSignature = crypto
             .createHmac('md5', MERCHANT_SECRET_KEY)
             .update(stringToSign)
             .digest('hex');
-        // --- КІНЕЦЬ ВИПРАВЛЕНОЇ ЛОГІКИ ---
 
         console.log('🔍 Перевірка підпису:');
         console.log('   Рядок для підпису:', stringToSign);
         console.log('   Очікуваний підпис:', expectedSignature);
-        console.log('   Отриманий підпис:', signature);
-        console.log('   Підписи збігаються:', expectedSignature === signature);
+        console.log('   Отриманий підпис:', merchantSignature);
+        console.log('   Підписи збігаються:', expectedSignature === merchantSignature);
 
-        if (expectedSignature !== signature) {
-            console.warn('❌ Неправильний підпис. Обробку зупинено.');
-            // Нічого більше не робимо. Замовлення не підтверджується.
-            
+        if (expectedSignature !== merchantSignature) {
+            console.warn('❌ Неправильний підпис. Обробку зупинено. ПЕРЕВІРТЕ SECRET KEY!');
         } else {
-            // ✅ УСПІШНА ПЕРЕВІРКА. ТІЛЬКИ ТЕПЕР МОЖНА ОБРОБЛЯТИ ЗАМОВЛЕННЯ.
-            console.log('✅ Підпис вірний. Продовжуємо обробку замовлення.');
+            console.log('✅ Підпис вірний. Продовжуємо обробку.');
             const allOrders = readOrders();
             const customerOrder = allOrders.orders[orderReference];
 
-            if (!customerOrder) {
-                console.error('❌ Замовлення не знайдено в базі:', orderReference);
-            } else if (customerOrder.status === 'paid') {
-                console.log('🔁 Замовлення вже було оплачено. Повторна обробка не потрібна.');
-            } else if (status === 'accept' || status === 'Accepted' || status === 'Approved' || status === 'approved') {
-                console.log('✅ Статус оплати підтверджено.');
-
-                // Оновлюємо статус замовлення
-                customerOrder.status = 'paid';
-                customerOrder.paidAt = new Date().toISOString();
-                customerOrder.wayforpayData = paymentData;
-                writeOrders(allOrders);
-
-                // Надсилаємо email клієнту
-                sendPaymentConfirmationEmail(
-                    customerOrder.email,
-                    customerOrder.name,
-                    customerOrder.courseName,
-                    orderReference
-                ).catch(err => console.error('❌ Помилка відправки email клієнту:', err.message));
-
-                // Надсилаємо email адміністратору
-                sendAdminNotification(
-                    customerOrder.email,
-                    customerOrder.name,
-                    customerOrder.courseName,
-                    orderReference,
-                    customerOrder.price
-                ).catch(err => console.error('❌ Помилка відправки email адміністратору:', err.message));
-
-                metrics.successfulPayments++;
-            } else {
-                console.warn(`⚠️ Оплата не успішна. Статус від WayForPay: ${status}`);
-                if (customerOrder) {
-                    customerOrder.status = 'declined';
+            if (customerOrder && customerOrder.status !== 'paid') {
+                if (transactionStatus === 'Approved') {
+                    console.log('✅ Статус оплати підтверджено.');
+                    customerOrder.status = 'paid';
+                    customerOrder.paidAt = new Date().toISOString();
                     customerOrder.wayforpayData = paymentData;
                     writeOrders(allOrders);
+
+                    sendPaymentConfirmationEmail(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference);
+                    sendAdminNotification(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price);
+                    metrics.successfulPayments++;
                 }
-                metrics.failedPayments++;
+            } else if (customerOrder && customerOrder.status === 'paid') {
+                console.log('🔁 Замовлення вже було оплачено.');
+            } else {
+                console.error('❌ Замовлення не знайдено:', orderReference);
             }
         }
-
-        // Код для відповіді WayForPay залишається тут, він має виконатись у будь-якому випадку,
-        // щоб платіжна система припинила надсилати повторні запити.
-        const responseTime = Math.floor(Date.now() / 1000);
-        const responseStr = [orderReference || 'unknown', 'accept', responseTime].join(';');
-        const responseSignature = crypto
-            .createHmac('md5', MERCHANT_SECRET_KEY)
-            .update(responseStr)
-            .digest('hex');
-
-        const response = {
-            orderReference: orderReference || 'unknown',
-            status: 'accept',
-            time: responseTime,
-            signature: responseSignature
-        };
-
-        console.log('📤 Відповідь WayForPay:', response);
-        res.json(response);
-
     } catch (error) {
         console.error('❌ Критична помилка обробки callback:', error);
-
+    } finally {
         const responseTime = Math.floor(Date.now() / 1000);
-        res.json({
-            orderReference: 'error',
-            status: 'accept',
-            time: responseTime,
-            signature: 'error_signature'
-        });
+        const orderRef = paymentData?.orderReference || 'unknown';
+        const responseStr = [orderRef, 'accept', responseTime].join(';');
+        const signature = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(responseStr).digest('hex');
+        res.json({ orderReference: orderRef, status: 'accept', time: responseTime, signature });
     }
 });
 
