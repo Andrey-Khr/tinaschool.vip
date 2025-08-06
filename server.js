@@ -321,75 +321,30 @@ app.post('/create-payment', paymentLimiter, async (req, res) => {
 });
 
 // Обробка callback від платіжної системи
-app.post('/server-callback', upload.none(), async (req, res) => {
-        try {
-        const { orderReference, status, time, merchantSignature: wfpSignature } = req.body;
-        console.log(`📞 Callback отримано: ${orderReference}, статус: ${status}`);
+// ТИМЧАСОВИЙ КОД ДЛЯ ДІАГНОСТИКИ - ПОВНІСТЮ ЗАМІНІТЬ СТАРИЙ /server-callback
+app.post('/server-callback', (req, res) => {
+    console.log('🕵️‍♂️  --- РЕЖИМ ДЕТЕКТИВА АКТИВОВАНО --- 🕵️‍♂️');
 
-        const stringToSign = [orderReference, status, time].join(';');
-        const expectedSignature = crypto
-            .createHmac('md5', MERCHANT_SECRET_KEY)
-            .update(stringToSign)
-            .digest('hex');
+    // Виводимо всі заголовки запиту, щоб побачити Content-Type
+    console.log('HEADERS:', JSON.stringify(req.headers, null, 2));
 
-        if (expectedSignature !== wfpSignature) {
-            console.error('❌ Неправильний підпис callback:', { expected: expectedSignature, received: wfpSignature });
-            return res.status(400).send('Invalid signature');
-        }
+    let rawBody = '';
+    req.on('data', (chunk) => {
+        rawBody += chunk.toString();
+    });
 
-        const allOrders = readOrders();
-        const customerOrder = allOrders.orders[orderReference];
+    req.on('end', () => {
+        console.log('RAW BODY:', rawBody);
+        console.log('🕵️‍♂️  --- РЕЖИМ ДЕТЕКТИВА ЗАВЕРШЕНО --- 🕵️‍♂️');
 
-        if (!customerOrder) {
-            console.error('❌ Замовлення не знайдено у файлі:', orderReference);
-            // Все одно відповідаємо платіжній системі, щоб уникнути повторних запитів
-        } else if (customerOrder.status === 'paid') {
-             console.log(`🔁 Повторний callback для вже оплаченого замовлення: ${orderReference}`);
-        } else if (status === 'accept') {
-            metrics.successfulPayments++;
-            console.log(`✅ Оплата підтверджена: ${orderReference}`);
-            
-            // Оновлюємо статус у файлі
-            customerOrder.status = 'paid';
-            customerOrder.paidAt = new Date().toISOString();
-            writeOrders(allOrders);
-            
-            // Відправка email
-            sendPaymentConfirmationEmail(
-                customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference
-            ).catch(err => console.error(err.message));
-            
-            sendAdminNotification(
-                customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price
-            ).catch(err => console.error(err.message));
+        // Відправляємо відповідь 200, щоб WayForPay не повторював запит
+        res.status(200).send('OK');
+    });
 
-        } else if (status === 'decline') {
-            metrics.failedPayments++;
-            console.log(`❌ Оплата відхилена: ${orderReference}`);
-
-            customerOrder.status = 'declined';
-            writeOrders(allOrders);
-        }
-
-        // Формування відповіді для платіжної системи
-        const responseTime = Math.floor(Date.now() / 1000);
-        const responseString = [orderReference, 'accept', responseTime].join(';');
-        const responseSignature = crypto
-            .createHmac('md5', MERCHANT_SECRET_KEY)
-            .update(responseString)
-            .digest('hex');
-
-        res.json({
-            orderReference,
-            status: 'accept',
-            time: responseTime,
-            signature: responseSignature
-        });
-
-    } catch (err) {
-        console.error('❌ Помилка обробки callback:', err);
-        res.status(500).send('Server error');
-    }
+    req.on('error', (err) => {
+        console.error('Помилка під час зчитування тіла запиту:', err);
+        res.status(500).send('Error');
+    });
 });
 
 // Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
