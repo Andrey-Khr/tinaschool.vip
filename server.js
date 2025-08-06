@@ -1,5 +1,4 @@
 const express = require('express');
-const multer = require('multer');
 const crypto = require('crypto');
 const path = require('path');
 const nodemailer = require('nodemailer');
@@ -8,32 +7,27 @@ const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
-const upload = multer();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
-
 // --- Робота з файлом для зберігання замовлень ---
 const ORDERS_FILE_PATH = path.join(__dirname, 'orders.json');
 
-// Функція для читання даних з файлу
 function readOrders() {
     try {
         if (!fs.existsSync(ORDERS_FILE_PATH)) {
-            // Якщо файл не існує, створюємо його з початковою структурою
             fs.writeFileSync(ORDERS_FILE_PATH, JSON.stringify({ orders: {} }, null, 2));
         }
         const fileContent = fs.readFileSync(ORDERS_FILE_PATH, 'utf-8');
         return JSON.parse(fileContent);
     } catch (error) {
         console.error('❌ Помилка читання файлу замовлень:', error);
-        return { orders: {} }; // Повертаємо пусту структуру в разі помилки
+        return { orders: {} };
     }
 }
 
-// Функція для запису даних у файл
 function writeOrders(data) {
     try {
         fs.writeFileSync(ORDERS_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
@@ -52,80 +46,27 @@ const requiredEnvVars = {
     EMAIL_USER: process.env.EMAIL_USER,
     EMAIL_PASS: process.env.EMAIL_PASS
 };
-
-const missingVars = Object.entries(requiredEnvVars)
-    .filter(([key, value]) => !value)
-    .map(([key]) => key);
-
+const missingVars = Object.entries(requiredEnvVars).filter(([key, value]) => !value).map(([key]) => key);
 if (missingVars.length > 0) {
     console.error('❌ Відсутні обов\'язкові змінні оточення:', missingVars.join(', '));
-    console.error('📝 Перевірте файл .env');
     process.exit(1);
 }
-
-const MERCHANT_ACCOUNT = process.env.MERCHANT_ACCOUNT;
-const MERCHANT_SECRET_KEY = process.env.MERCHANT_SECRET_KEY;
-const MERCHANT_DOMAIN_NAME = process.env.MERCHANT_DOMAIN_NAME;
-
-// Email configuration
-const EMAIL_HOST = process.env.EMAIL_HOST;
-const EMAIL_PORT = process.env.EMAIL_PORT || 587;
-const EMAIL_USER = process.env.EMAIL_USER;
-const EMAIL_PASS = process.env.EMAIL_PASS;
-const EMAIL_FROM = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+const { MERCHANT_ACCOUNT, MERCHANT_SECRET_KEY, MERCHANT_DOMAIN_NAME, EMAIL_HOST, EMAIL_PORT = 587, EMAIL_USER, EMAIL_PASS, EMAIL_FROM = EMAIL_USER } = process.env;
 
 // Метрики для моніторингу
-const metrics = {
-    totalOrders: 0,
-    successfulPayments: 0,
-    failedPayments: 0,
-    emailsSent: 0,
-    emailsFailed: 0,
-    startTime: Date.now()
-};
+const metrics = { totalOrders: 0, successfulPayments: 0, failedPayments: 0, emailsSent: 0, emailsFailed: 0, startTime: Date.now() };
 
 // Налаштування транспорту для email
-const transporter = nodemailer.createTransport({
-    host: EMAIL_HOST,
-    port: EMAIL_PORT,
-    secure: EMAIL_PORT === 465,
-    auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS
-    },
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 100
-});
-
-transporter.verify((error, success) => {
-    if (error) {
-        console.error('❌ Email налаштування неправильні:', error.message);
-    } else {
-        console.log('✅ Email сервер готовий до відправки');
-    }
-});
+const transporter = nodemailer.createTransport({ host: EMAIL_HOST, port: EMAIL_PORT, secure: EMAIL_PORT === 465, auth: { user: EMAIL_USER, pass: EMAIL_PASS }, pool: true, maxConnections: 5, maxMessages: 100 });
+transporter.verify((error) => console.log(error ? `❌ Email налаштування неправильні: ${error.message}` : '✅ Email сервер готовий до відправки'));
 
 // Rate limiting
-const paymentLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 хвилин
-    max: 10, // максимум 10 спроб на IP
-    message: 'Забагато спроб оплати. Спробуйте через 15 хвилин.',
-    standardHeaders: true,
-    legacyHeaders: false
-});
+const paymentLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'Забагато спроб оплати. Спробуйте через 15 хвилин.', standardHeaders: true, legacyHeaders: false });
 
-// Функція валідації email
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-// Функція для відправки email клієнту
+// Функції Email
 async function sendPaymentConfirmationEmail(email, name, courseName, orderId) {
     try {
         const telegramBotUrl = process.env.TELEGRAM_BOT_URL || 'https://t.me/Tinas_cursuribot';
-        
         const mailOptions = {
             from: EMAIL_FROM,
             to: email,
@@ -164,7 +105,6 @@ async function sendPaymentConfirmationEmail(email, name, courseName, orderId) {
                 </div>
             `
         };
-
         await transporter.sendMail(mailOptions);
         metrics.emailsSent++;
         console.log(`✅ Email підтвердження відправлено на ${email}`);
@@ -173,13 +113,11 @@ async function sendPaymentConfirmationEmail(email, name, courseName, orderId) {
         console.error('❌ Помилка відправки email клієнту:', error.message);
     }
 }
-
-// Функція для відправки email адміністратору
 async function sendAdminNotification(email, name, courseName, orderId, price) {
     try {
         const mailOptions = {
             from: EMAIL_FROM,
-            to: EMAIL_FROM, // Відправляємо на власну пошту
+            to: EMAIL_FROM,
             subject: `💰 Нове замовлення - ${orderId}`,
             html: `
                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -200,79 +138,41 @@ async function sendAdminNotification(email, name, courseName, orderId, price) {
                 </div>
             `
         };
-
         await transporter.sendMail(mailOptions);
         console.log('✅ Сповіщення адміністратора відправлено');
     } catch (error) {
         console.error('❌ Помилка відправки сповіщення адміністратора:', error.message);
     }
 }
+function isValidEmail(email) { const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; return emailRegex.test(email); }
 
 // Middleware
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-
-app.use((req, res, next) => {
-    if (req.path === '/server-callback') {
-        console.log(`🔍 ${req.method} ${req.path}`);
-        console.log('🔍 Content-Type:', req.headers['content-type']);
-        console.log('🔍 User-Agent:', req.headers['user-agent']);
-        console.log('🔍 IP:', req.ip);
-    }
-    next();
-});
-
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Маршрути
-/*app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-*/
+// --- МАРШРУТИ ---
+
 // Маршрут для статистики
 app.get('/stats', (req, res) => {
     const uptime = Date.now() - metrics.startTime;
     const allOrders = readOrders();
-    res.json({
-        ...metrics,
-        totalOrdersInFile: Object.keys(allOrders.orders).length,
-        uptime: Math.floor(uptime / 1000) + ' секунд',
-        timestamp: new Date().toISOString()
-    });
+    res.json({ ...metrics, totalOrdersInFile: Object.keys(allOrders.orders).length, uptime: `${Math.floor(uptime / 1000)} секунд` });
 });
 
-// Створення платежу з валідацією
+// Створення платежу
 app.post('/create-payment', paymentLimiter, async (req, res) => {
     try {
         const { name, email, course } = req.body;
-        
-        if (!name || !email || !course) {
-            return res.status(400).json({ error: 'Всі поля обов\'язкові' });
+        if (!name || !email || !course || !isValidEmail(email) || name.length < 2 || name.length > 50) {
+            return res.status(400).json({ error: 'Некоректні дані форми.' });
         }
-        if (!isValidEmail(email)) {
-            return res.status(400).json({ error: 'Некоректний email адрес' });
-        }
-        if (name.length < 2 || name.length > 50) {
-            return res.status(400).json({ error: 'Ім\'я має бути від 2 до 50 символів' });
-        }
-
         const courses = {
-            solo: {
-                name: 'Курс: Самостійний',
-                price: '1' // ВИПРАВЛЕНО ЦІНУ
-            },
-            support: {
-                name: 'Курс з підтримкою',
-                price: '777' // ВИПРАВЛЕНО ЦІНУ
-            }
+            solo: { name: 'Курс: Самостійний', price: '1' },
+            support: { name: 'Курс з підтримкою', price: '777' }
         };
-
         const selected = courses[course];
-        if (!selected) {
-            return res.status(400).json({ error: 'Курс не знайдено' });
-        }
+        if (!selected) return res.status(400).json({ error: 'Курс не знайдено' });
 
         const courseData = {
             name: selected.name,
@@ -280,37 +180,17 @@ app.post('/create-payment', paymentLimiter, async (req, res) => {
             currency: 'UAH',
             orderId: `COURSE_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`
         };
-
         const orderDate = Math.floor(Date.now() / 1000).toString();
-        const stringToSign = [
-            MERCHANT_ACCOUNT, MERCHANT_DOMAIN_NAME, courseData.orderId,
-            orderDate, courseData.price, courseData.currency,
-            courseData.name, '1', courseData.price
-        ].join(';');
-
-        const merchantSignature = crypto
-            .createHmac('md5', MERCHANT_SECRET_KEY)
-            .update(stringToSign)
-            .digest('hex');
+        const stringToSign = [MERCHANT_ACCOUNT, MERCHANT_DOMAIN_NAME, courseData.orderId, orderDate, courseData.price, courseData.currency, courseData.name, '1', courseData.price].join(';');
+        const merchantSignature = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(stringToSign).digest('hex');
 
         metrics.totalOrders++;
-        
-        // Зберігаємо дані про замовлення у файл
         const allOrders = readOrders();
-        allOrders.orders[courseData.orderId] = {
-            name: name.trim(),
-            email: email.toLowerCase().trim(),
-            courseName: courseData.name,
-            price: courseData.price,
-            status: 'pending',
-            createdAt: new Date().toISOString()
-        };
+        allOrders.orders[courseData.orderId] = { name: name.trim(), email: email.toLowerCase().trim(), courseName: courseData.name, price: courseData.price, status: 'pending', createdAt: new Date().toISOString() };
         writeOrders(allOrders);
-
-        console.log(`💰 Нове замовлення створено: ${courseData.orderId}, курс: ${course}, email: ${email}`);
+        console.log(`💰 Нове замовлення створено: ${courseData.orderId}`);
 
         const baseUrl = `${req.protocol}://${req.get('host')}`;
-
         res.render('redirect', {
             merchantAccount: MERCHANT_ACCOUNT,
             merchantDomainName: MERCHANT_DOMAIN_NAME,
@@ -326,281 +206,119 @@ app.post('/create-payment', paymentLimiter, async (req, res) => {
             failUrl: `${baseUrl}/payment-return`,
             signature: merchantSignature
         });
-
     } catch (error) {
         console.error('❌ Помилка створення платежу:', error);
         res.status(500).json({ error: 'Внутрішня помилка сервера' });
     }
 });
 
-// Обробка callback від платіжної системи
-// Обробка callback від платіжної системи WayForPay
-app.post('/server-callback', upload.none(), async (req, res) => {
+// Обробка callback від платіжної системи - ФІНАЛЬНА ВЕРСІЯ
+app.post('/server-callback', async (req, res) => {
     try {
-        console.log('📞 Callback отримано. Повні дані:', JSON.stringify(req.body, null, 2));
-        
         let callbackData;
-        
-        // WayForPay надсилає дані в особливому форматі - JSON як ключ об'єкта
         const bodyKeys = Object.keys(req.body);
+
+        // Крок 1: Правильно розпаковуємо дані, які WayForPay надсилає як ключ
         if (bodyKeys.length === 1 && bodyKeys[0].startsWith('{')) {
-            // Парсимо JSON з ключа
-            try {
-                callbackData = JSON.parse(bodyKeys[0]);
-                console.log('🔧 Розпаковані дані WayForPay:', callbackData);
-            } catch (parseError) {
-                console.error('❌ Помилка парсингу JSON з ключа:', parseError);
-                return res.status(400).json({ error: 'Invalid JSON format' });
-            }
+            callbackData = JSON.parse(bodyKeys[0]);
         } else {
-            // Стандартний формат (якщо WayForPay змінить формат)
             callbackData = req.body;
         }
-        
-        // Витягуємо потрібні поля з розпакованих даних
-        const {
-            orderReference,
-            transactionStatus,
-            merchantSignature: wfpSignature,
-            processingDate,
-            merchantAccount,
-            amount,
-            currency
-        } = callbackData;
-        
-        console.log(`📞 Callback деталі: ${orderReference}, статус: ${transactionStatus}`);
-        
-        // Перевіряємо наявність обов'язкових полів
-        if (!orderReference || !transactionStatus || !processingDate) {
-            console.error('❌ Відсутні обов\'язкові поля в callback:', { 
-                orderReference, 
-                transactionStatus, 
-                processingDate 
-            });
-            return res.status(400).json({ error: 'Missing required fields' });
+        console.log('✅🔧 Дані WayForPay успішно розпаковано');
+
+        const { orderReference, transactionStatus, reasonCode, merchantSignature: wfpSignature } = callbackData;
+        console.log(`✅📞 Callback деталі: ${orderReference}, статус: ${transactionStatus}`);
+
+        // Крок 2: ФОРМУЄМО РЯДОК ДЛЯ ПІДПИСУ ПРАВИЛЬНО
+        const stringToSign = [orderReference, transactionStatus, reasonCode].join(';');
+        const expectedSignature = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(stringToSign).digest('hex');
+
+        console.log('✅🔍 Перевірка підпису:', { stringToSign, expected: expectedSignature, received: wfpSignature, match: expectedSignature === wfpSignature });
+
+        if (expectedSignature !== wfpSignature) {
+            console.error('❌ Неправильний підпис callback!');
+            return res.status(400).send('Invalid signature');
         }
 
-        // Для WayForPay підпис формується інакше
-        // Для callback підпис перевіряємо за іншою схемою
-        const stringToSign = [
-            merchantAccount,
-            orderReference, 
-            amount,
-            currency,
-            'accept'  // status для відповіді
-        ].join(';');
-        
-        const expectedSignature = crypto
-            .createHmac('md5', MERCHANT_SECRET_KEY)
-            .update(stringToSign)
-            .digest('hex');
-
-        console.log('🔍 Перевірка підпису WayForPay:', {
-            stringToSign,
-            expected: expectedSignature,
-            received: wfpSignature,
-            match: expectedSignature === wfpSignature
-        });
-
-        // Поки що пропускаємо перевірку підпису для діагностики
-        if (wfpSignature && expectedSignature !== wfpSignature) {
-            console.log('⚠️ Підпис не співпадає, але продовжуємо обробку для діагностики');
-            // НЕ повертаємо помилку поки не налагодимо
-            // return res.status(400).json({ error: 'Invalid signature' });
-        }
-
+        // Крок 3: Обробка замовлення
         const allOrders = readOrders();
         const customerOrder = allOrders.orders[orderReference];
 
         if (!customerOrder) {
-            console.error('❌ Замовлення не знайдено у файлі:', orderReference);
+            console.error(`❌ Замовлення ${orderReference} не знайдено у файлі.`);
         } else if (customerOrder.status === 'paid') {
             console.log(`🔁 Повторний callback для вже оплаченого замовлення: ${orderReference}`);
-        } else {
-            // Обробляємо за статусом транзакції WayForPay
-            if (transactionStatus === 'Approved') {
-                metrics.successfulPayments++;
-                console.log(`✅ Оплата підтверджена WayForPay: ${orderReference}`);
-                
-                // Оновлюємо статус у файлі
-                customerOrder.status = 'paid';
-                customerOrder.paidAt = new Date().toISOString();
-                customerOrder.wayforpayData = {
-                    transactionStatus,
-                    authCode: callbackData.authCode,
-                    cardPan: callbackData.cardPan,
-                    paymentSystem: callbackData.paymentSystem
-                };
-                writeOrders(allOrders);
-                
-                // Відправка email
-                sendPaymentConfirmationEmail(
-                    customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference
-                ).catch(err => console.error('❌ Email error:', err.message));
-                
-                sendAdminNotification(
-                    customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price
-                ).catch(err => console.error('❌ Admin email error:', err.message));
-
-            } else if (transactionStatus === 'Declined') {
-                metrics.failedPayments++;
-                console.log(`❌ Оплата відхилена WayForPay: ${orderReference}, причина: ${callbackData.reason}`);
-
-                customerOrder.status = 'declined';
-                customerOrder.declinedAt = new Date().toISOString();
-                customerOrder.declineReason = callbackData.reason;
-                writeOrders(allOrders);
-            }
+        } else if (transactionStatus === 'Approved') {
+            customerOrder.status = 'paid';
+            customerOrder.paidAt = new Date().toISOString();
+            writeOrders(allOrders);
+            console.log(`✅ Оплата успішно підтверджена: ${orderReference}`);
+            
+            // Відправка email
+            sendPaymentConfirmationEmail(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference);
+            sendAdminNotification(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price);
+        } else if (transactionStatus === 'Declined') {
+            customerOrder.status = 'declined';
+            writeOrders(allOrders);
+            console.log(`❌ Оплата відхилена WayForPay: ${orderReference}, причина: ${callbackData.reason}`);
         }
 
-        // Формування відповіді для WayForPay
+        // Крок 4: Формуємо правильну відповідь для WayForPay
         const responseTime = Math.floor(Date.now() / 1000);
-        const responseString = [
-            callbackData.merchantAccount,
-            orderReference,
-            'accept',
-            responseTime
-        ].join(';');
+        const responseString = [orderReference, 'accept', responseTime].join(';');
+        const responseSignature = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(responseString).digest('hex');
         
-        const responseSignature = crypto
-            .createHmac('md5', MERCHANT_SECRET_KEY)
-            .update(responseString)
-            .digest('hex');
-
-        const response = {
-            orderReference,
-            status: 'accept',
-            time: responseTime,
-            signature: responseSignature
-        };
-
-        console.log('📤 Відповідь WayForPay:', response);
-        res.json(response);
+        res.json({ orderReference, status: 'accept', time: responseTime, signature: responseSignature });
 
     } catch (err) {
         console.error('❌ Критична помилка обробки callback:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).send('Server error');
     }
 });
 
-// Додатковий middleware для обробки специфічного формату WayForPay
-app.use('/server-callback', (req, res, next) => {
-    console.log('🔍 RAW body before processing:', req.body);
-    console.log('🔍 Body type:', typeof req.body);
-    console.log('🔍 Body keys:', Object.keys(req.body));
-    next();
-});
-// Альтернативний обробник callback для GET запитів
-app.get('/server-callback', async (req, res) => {
-    console.log('📞 GET Callback отримано:', req.query);
-    
-    const { orderReference, status, time, merchantSignature: wfpSignature } = req.query;
-    
-    if (!orderReference || !status || !time) {
-        console.error('❌ GET callback: відсутні обов\'язкові поля');
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-    
-    // Той самий код обробки, що і для POST
-    const stringToSign = [orderReference, status, time].join(';');
-    const expectedSignature = crypto
-        .createHmac('md5', MERCHANT_SECRET_KEY)
-        .update(stringToSign)
-        .digest('hex');
 
-    if (expectedSignature !== wfpSignature) {
-        console.error('❌ GET callback неправильний підпис');
-        return res.status(400).json({ error: 'Invalid signature' });
-    }
-    
-    res.json({ status: 'ok', message: 'GET callback processed' });
-});
-
-// Тестовий обробник (тільки для розробки)
-if (process.env.NODE_ENV !== 'production') {
-    app.post('/test-callback', (req, res) => {
-        console.log('🧪 Тестовий callback:', req.body);
-        res.json({ received: req.body });
-    });
-}
-
-
-// Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
+// Маршрут для повернення клієнта
 app.all('/payment-return', (req, res) => {
     try {
-        console.log(`⚠️  Користувач повернувся на сайт. Метод: ${req.method}.`);
-        console.log('📦  Дані від браузера:', req.body || req.query);
-
         const allOrdersData = readOrders();
         const orders = allOrdersData.orders;
-        
-        // Знаходимо ID останнього створеного замовлення
-        const latestOrderId = Object.keys(orders).sort((a, b) => {
-            const timeA = new Date(orders[a].createdAt).getTime();
-            const timeB = new Date(orders[b].createdAt).getTime();
-            return timeB - timeA;
-        })[0];
+        const latestOrderId = Object.keys(orders).sort((a, b) => new Date(orders[b].createdAt) - new Date(orders[a].createdAt))[0];
 
         if (!latestOrderId) {
             console.error('❌ Не вдалося знайти жодного замовлення у файлі.');
             return res.redirect('/failure.html?error=no_orders_found');
         }
-
-        console.log(`⏳  Знайдено останнє замовлення: ${latestOrderId}. Перенаправлення на сторінку перевірки статусу.`);
-        
-        // Перенаправляємо на сторінку статусу з ID останнього замовлення
+        console.log(`⏳ Знайдено останнє замовлення: ${latestOrderId}. Перенаправлення на сторінку перевірки статусу.`);
         res.redirect(`/status.html?order_id=${latestOrderId}`);
 
     } catch (error) {
-        console.error('❌  Критична помилка в /payment-return:', error);
+        console.error('❌ Критична помилка в /payment-return:', error);
         res.redirect('/failure.html?error=return_processing_error');
     }
 });
 
-// Маршрут для перевірки статусу оплати (використовується в status.html)  
+// Маршрут для перевірки статусу
 app.get('/get-payment-status', (req, res) => {
     try {
         const { order_id } = req.query;
+        if (!order_id) return res.status(400).json({ error: 'Order ID не вказано' });
         
-        if (!order_id) {
-            return res.status(400).json({ error: 'Order ID не вказано' });
-        }
-
         const allOrders = readOrders();
         const order = allOrders.orders[order_id];
+        if (!order) return res.status(404).json({ error: 'Замовлення не знайдено' });
 
-        if (!order) {
-            return res.status(404).json({ error: 'Замовлення не знайдено' });
-        }
-
-        // Повертаємо статус замовлення
-        res.json({
-            status: order.status === 'paid' ? 'accept' : order.status || 'pending',
-            orderId: order_id,
-            courseName: order.courseName
-        });
-
+        res.json({ status: order.status === 'paid' ? 'accept' : order.status || 'pending' });
     } catch (error) {
         console.error('❌ Помилка отримання статусу:', error);
         res.status(500).json({ error: 'Внутрішня помилка сервера' });
     }
 });
-// Graceful shutdown
-process.on('SIGTERM', () => {
-    console.log('🔄 Отримано сигнал SIGTERM, завершення роботи...');
-    transporter.close();
-    process.exit(0);
-});
 
-process.on('SIGINT', () => {
-    console.log('🔄 Отримано сигнал SIGINT, завершення роботи...');
-    transporter.close();
-    process.exit(0);
-});
+// Graceful shutdown
+process.on('SIGTERM', () => { console.log('🔄 Отримано сигнал SIGTERM...'); transporter.close(); process.exit(0); });
+process.on('SIGINT', () => { console.log('🔄 Отримано сигнал SIGINT...'); transporter.close(); process.exit(0); });
 
 // Запуск сервера
 app.listen(PORT, () => {
-    console.log(`🚀 Сервер запущено на http://localhost:${PORT}`);
-    console.log(`📊 Статистика доступна на http://localhost:${PORT}/stats`);
-    console.log(`📧 Email: ${EMAIL_USER} → ${EMAIL_HOST}:${EMAIL_PORT}`);
+    console.log(`🚀 Сервер запущено на порту ${PORT}`);
 });
