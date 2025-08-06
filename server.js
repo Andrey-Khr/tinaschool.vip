@@ -385,6 +385,79 @@ app.use('/server-callback', (req, res, next) => {
     next();
 });
 
+// ✅ Маршрут для створення платежу
+const generateOrderId = () => 'ORDER-' + Date.now();
+
+app.post('/create-payment', (req, res) => {
+    try {
+        const { name, email, courseName, price } = req.body;
+
+        if (!name || !email || !courseName || !price) {
+            return res.status(400).json({ error: 'Не всі поля заповнено' });
+        }
+
+        if (!isValidEmail(email)) {
+            return res.status(400).json({ error: 'Некоректний email' });
+        }
+
+        const orderReference = generateOrderId();
+
+        const newOrder = {
+            name,
+            email,
+            courseName,
+            price,
+            status: 'pending',
+            createdAt: new Date().toISOString()
+        };
+
+        const allOrders = readOrders();
+        allOrders.orders[orderReference] = newOrder;
+        writeOrders(allOrders);
+        metrics.totalOrders++;
+
+        const orderData = {
+            merchantAccount: MERCHANT_ACCOUNT,
+            merchantDomainName: MERCHANT_DOMAIN_NAME,
+            orderReference,
+            orderDate: Math.floor(Date.now() / 1000),
+            amount: parseFloat(price),
+            currency: 'UAH',
+            productName: [courseName],
+            productPrice: [parseFloat(price)],
+            productCount: [1],
+            clientEmail: email,
+            returnUrl: `${req.protocol}://${req.get('host')}/payment-return`,
+            serviceUrl: `${req.protocol}://${req.get('host')}/server-callback`
+        };
+
+        const signatureStr = [
+            orderData.merchantAccount,
+            orderData.merchantDomainName,
+            orderData.orderReference,
+            orderData.orderDate,
+            orderData.amount,
+            orderData.currency,
+            ...orderData.productName,
+            ...orderData.productCount,
+            ...orderData.productPrice
+        ].join(';');
+
+        const merchantSignature = crypto
+            .createHmac('md5', MERCHANT_SECRET_KEY)
+            .update(signatureStr)
+            .digest('hex');
+
+        orderData.merchantSignature = merchantSignature;
+
+        res.json(orderData);
+    } catch (error) {
+        console.error('❌ Помилка створення платежу:', error);
+        res.status(500).json({ error: 'Внутрішня помилка сервера' });
+    }
+});
+
+
 // Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
 app.all('/payment-return', (req, res) => {
     try {
