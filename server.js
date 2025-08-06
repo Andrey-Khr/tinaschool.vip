@@ -390,15 +390,20 @@ const generateOrderId = () => 'ORDER-' + Date.now();
 
 app.post('/create-payment', (req, res) => {
     try {
-        const { name, email, courseName, price } = req.body;
+        const { name, email, course } = req.body;
+            let price;
+            let courseName;
 
-        if (!name || !email || !courseName || !price) {
-            return res.status(400).json({ error: 'Не всі поля заповнено' });
-        }
+            if (course === 'solo') {
+                price = 1; // Ціна для тарифу "Самостійний"
+                courseName = 'Тариф: САМОСТІЙНИЙ';
+            } else if (course === 'support') {
+                price = 777; // Ціна для тарифу "З підтримкою"
+                courseName = 'Тариф: З ПІДТРИМКОЮ';
+            } else {
+                return res.status(400).json({ error: 'Некоректний тариф' });
+            }
 
-        if (!isValidEmail(email)) {
-            return res.status(400).json({ error: 'Некоректний email' });
-        }
 
         const orderReference = generateOrderId();
 
@@ -450,7 +455,7 @@ app.post('/create-payment', (req, res) => {
 
         orderData.merchantSignature = merchantSignature;
 
-        res.json(orderData);
+        res.render('redirect-to-wfp', orderData);
     } catch (error) {
         console.error('❌ Помилка створення платежу:', error);
         res.status(500).json({ error: 'Внутрішня помилка сервера' });
@@ -461,31 +466,22 @@ app.post('/create-payment', (req, res) => {
 // Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
 app.all('/payment-return', (req, res) => {
     try {
-        console.log(`⚠️  Користувач повернувся на сайт. Метод: ${req.method}.`);
-        console.log('📦  Дані від браузера:', req.body || req.query);
+        // WayForPay має повернути orderReference у query або body
+        const orderId = req.body.orderReference || req.query.orderReference;
 
-        const allOrdersData = readOrders();
-        const orders = allOrdersData.orders;
-        
-        // Знаходимо ID останнього створеного замовлення
-        const latestOrderId = Object.keys(orders).sort((a, b) => {
-            const timeA = new Date(orders[a].createdAt).getTime();
-            const timeB = new Date(orders[b].createdAt).getTime();
-            return timeB - timeA;
-        })[0];
-
-        if (!latestOrderId) {
-            console.error('❌ Не вдалося знайти жодного замовлення у файлі.');
-            return res.redirect('/failure.html?error=no_orders_found');
+        if (!orderId) {
+            console.error('❌ WayForPay did not return an orderReference.');
+            // Перенаправити на сторінку помилки, якщо ID не знайдено
+            return res.redirect('/failure.html?error=no_order_id_returned');
         }
 
-        console.log(`⏳  Знайдено останнє замовлення: ${latestOrderId}. Перенаправлення на сторінку перевірки статусу.`);
-        
-        // Перенаправляємо на сторінку статусу з ID останнього замовлення
-        res.redirect(`/status.html?order_id=${latestOrderId}`);
+        console.log(`⏳ Користувач повернувся для замовлення: ${orderId}. Перенаправлення на сторінку перевірки статусу.`);
+
+        // Перенаправити на сторінку статусу з КОНКРЕТНИМ ID замовлення
+        res.redirect(`/status.html?order_id=${orderId}`);
 
     } catch (error) {
-        console.error('❌  Критична помилка в /payment-return:', error);
+        console.error('❌ Критична помилка в /payment-return:', error);
         res.redirect('/failure.html?error=return_processing_error');
     }
 });
