@@ -213,6 +213,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use((req, res, next) => {
+    if (req.path === '/server-callback') {
+        console.log(`🔍 ${req.method} ${req.path}`);
+        console.log('🔍 Content-Type:', req.headers['content-type']);
+        console.log('🔍 User-Agent:', req.headers['user-agent']);
+        console.log('🔍 IP:', req.ip);
+    }
+    next();
+});
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -324,9 +334,20 @@ app.post('/create-payment', paymentLimiter, async (req, res) => {
 });
 
 // Обробка callback від платіжної системи
+// Обробка callback від платіжної системи
 app.post('/server-callback', upload.none(), async (req, res) => {
-        try {
+    try {
+        console.log('📞 Callback отримано. Повні дані:', JSON.stringify(req.body, null, 2));
+        console.log('📞 Headers:', JSON.stringify(req.headers, null, 2));
+        
         const { orderReference, status, time, merchantSignature: wfpSignature } = req.body;
+        
+        // Перевіряємо наявність обов'язкових полів
+        if (!orderReference || !status || !time) {
+            console.error('❌ Відсутні обов\'язкові поля в callback:', { orderReference, status, time });
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
         console.log(`📞 Callback отримано: ${orderReference}, статус: ${status}`);
 
         const stringToSign = [orderReference, status, time].join(';');
@@ -335,9 +356,26 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             .update(stringToSign)
             .digest('hex');
 
+        // Детальне логування підписів
+        console.log('🔍 Перевірка підпису:', {
+            stringToSign,
+            expected: expectedSignature,
+            received: wfpSignature,
+            match: expectedSignature === wfpSignature
+        });
+
+        if (!wfpSignature) {
+            console.error('❌ Підпис callback відсутній');
+            return res.status(400).json({ error: 'Signature missing' });
+        }
+
         if (expectedSignature !== wfpSignature) {
-            console.error('❌ Неправильний підпис callback:', { expected: expectedSignature, received: wfpSignature });
-            return res.status(400).send('Invalid signature');
+            console.error('❌ Неправильний підпис callback:', { 
+                expected: expectedSignature, 
+                received: wfpSignature,
+                stringToSign 
+            });
+            return res.status(400).json({ error: 'Invalid signature' });
         }
 
         const allOrders = readOrders();
@@ -345,9 +383,9 @@ app.post('/server-callback', upload.none(), async (req, res) => {
 
         if (!customerOrder) {
             console.error('❌ Замовлення не знайдено у файлі:', orderReference);
-            // Все одно відповідаємо платіжній системі, щоб уникнути повторних запитів
+            // Все одно відповідаємо платіжній системі успішно
         } else if (customerOrder.status === 'paid') {
-             console.log(`🔁 Повторний callback для вже оплаченого замовлення: ${orderReference}`);
+            console.log(`🔁 Повторний callback для вже оплаченого замовлення: ${orderReference}`);
         } else if (status === 'accept') {
             metrics.successfulPayments++;
             console.log(`✅ Оплата підтверджена: ${orderReference}`);
@@ -360,18 +398,21 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             // Відправка email
             sendPaymentConfirmationEmail(
                 customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference
-            ).catch(err => console.error(err.message));
+            ).catch(err => console.error('❌ Email error:', err.message));
             
             sendAdminNotification(
                 customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price
-            ).catch(err => console.error(err.message));
+            ).catch(err => console.error('❌ Admin email error:', err.message));
 
         } else if (status === 'decline') {
             metrics.failedPayments++;
             console.log(`❌ Оплата відхилена: ${orderReference}`);
 
-            customerOrder.status = 'declined';
-            writeOrders(allOrders);
+            if (customerOrder) {
+                customerOrder.status = 'declined';
+                customerOrder.declinedAt = new Date().toISOString();
+                writeOrders(allOrders);
+            }
         }
 
         // Формування відповіді для платіжної системи
@@ -382,18 +423,55 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             .update(responseString)
             .digest('hex');
 
-        res.json({
+        const response = {
             orderReference,
             status: 'accept',
             time: responseTime,
             signature: responseSignature
-        });
+        };
+
+        console.log('📤 Відповідь платіжній системі:', response);
+        res.json(response);
 
     } catch (err) {
         console.error('❌ Помилка обробки callback:', err);
-        res.status(500).send('Server error');
+        res.status(500).json({ error: 'Server error' });
     }
 });
+// Альтернативний обробник callback для GET запитів
+app.get('/server-callback', async (req, res) => {
+    console.log('📞 GET Callback отримано:', req.query);
+    
+    const { orderReference, status, time, merchantSignature: wfpSignature } = req.query;
+    
+    if (!orderReference || !status || !time) {
+        console.error('❌ GET callback: відсутні обов\'язкові поля');
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    // Той самий код обробки, що і для POST
+    const stringToSign = [orderReference, status, time].join(';');
+    const expectedSignature = crypto
+        .createHmac('md5', MERCHANT_SECRET_KEY)
+        .update(stringToSign)
+        .digest('hex');
+
+    if (expectedSignature !== wfpSignature) {
+        console.error('❌ GET callback неправильний підпис');
+        return res.status(400).json({ error: 'Invalid signature' });
+    }
+    
+    res.json({ status: 'ok', message: 'GET callback processed' });
+});
+
+// Тестовий обробник (тільки для розробки)
+if (process.env.NODE_ENV !== 'production') {
+    app.post('/test-callback', (req, res) => {
+        console.log('🧪 Тестовий callback:', req.body);
+        res.json({ received: req.body });
+    });
+}
+
 
 // Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
 app.all('/payment-return', (req, res) => {
