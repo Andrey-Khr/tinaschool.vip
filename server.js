@@ -1,4 +1,5 @@
 const express = require('express');
+const multer = require('multer');
 const crypto = require('crypto');
 const path = require('path');
 const nodemailer = require('nodemailer');
@@ -9,6 +10,7 @@ require('dotenv').config();
 const app = express();
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
+const upload = multer();
 
 // --- Робота з файлом для зберігання замовлень ---
 const ORDERS_FILE_PATH = path.join(__dirname, 'orders.json');
@@ -205,7 +207,7 @@ async function sendAdminNotification(email, name, courseName, orderId, price) {
 
 // Middleware
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json({ type: '*/*' }));
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.set('view engine', 'ejs');
@@ -319,8 +321,8 @@ app.post('/create-payment', paymentLimiter, async (req, res) => {
 });
 
 // Обробка callback від платіжної системи
-app.post('/server-callback', async (req, res) => {
-    try {
+app.post('/server-callback', upload.none(), async (req, res) => {
+        try {
         const { orderReference, status, time, merchantSignature: wfpSignature } = req.body;
         console.log(`📞 Callback отримано: ${orderReference}, статус: ${status}`);
 
