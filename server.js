@@ -233,28 +233,22 @@ app.get('/stats', (req, res) => {
 
 // Створення платежу з валідацією
 app.post('/server-callback', upload.none(), async (req, res) => {
-   
-   let paymentData;
-
+    let paymentData; // Оголошуємо тут, щоб було видно в finally
     try {
         console.log('📞 Callback отримано від WayForPay');
         console.log('📅 Час:', new Date().toISOString());
-         
-        if (
-            Object.keys(req.body).length === 1 &&
-            typeof Object.keys(req.body)[0] === 'string' &&
-            req.headers['content-type'] === 'application/x-www-form-urlencoded'
-        ) {
+
+        if (Object.keys(req.body).length === 1 && typeof Object.keys(req.body)[0] === 'string') {
             try {
                 paymentData = JSON.parse(Object.keys(req.body)[0]);
+                console.log('✅ JSON успішно розпарсено з ключа');
             } catch (e) {
-                console.warn('⚠️ Неможливо розпарсити JSON з ключа:', e.message);
-                return res.status(400).send('Invalid JSON format in callback');
+                console.error('❌ Помилка парсингу JSON з ключа:', e.message);
+                paymentData = req.body;
             }
         } else {
             paymentData = req.body;
         }
-
         console.log('🔍 Отримані дані:', JSON.stringify(paymentData, null, 2));
 
         const { orderReference, transactionStatus, createdDate, merchantSignature } = paymentData;
@@ -263,21 +257,19 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             console.warn('⚠️ Відсутні необхідні поля в callback-запиті.');
             return res.status(400).json({ error: 'Missing required fields' });
         }
-    
 
-            const secretKey = process.env.MERCHANT_SECRET_KEY; // або process.env.MERCHANT_SECRET_KEY
+        // --- ВИПРАВЛЕНА ЛОГІКА ПІДПИСУ ---
+        const stringToSign = [
+            String(orderReference),
+            String(transactionStatus),
+            String(createdDate)
+        ].join(';');
 
-            // Повний фрагмент коду для заміни (рядки 110-120):
-            const stringToSign = [
-            String(orderReference).trim(),
-            String(transactionStatus).trim(),
-            String(createdDate).trim()
-            ].join(';');
-
-            const expectedSignature = crypto
-            .createHmac('md5', MERCHANT_SECRET_KEY) // Використовуйте змінну оточення!
+        const expectedSignature = crypto
+            .createHmac('md5', MERCHANT_SECRET_KEY) // ВИКОРИСТОВУЄМО HMAC
             .update(stringToSign)
             .digest('hex');
+        // --- КІНЕЦЬ ВИПРАВЛЕННЯ ---
 
         console.log('🔍 Перевірка підпису:');
         console.log('   Рядок для підпису:', stringToSign);
@@ -315,21 +307,24 @@ app.post('/server-callback', upload.none(), async (req, res) => {
     } finally {
         const responseTime = Math.floor(Date.now() / 1000);
         const orderRef = paymentData?.orderReference || 'unknown';
+        
+        // Правильний підпис для відповіді
         const responseStr = [orderRef, 'accept', responseTime].join(';');
-        const signature = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(responseStr).digest('hex');
-        res.json({ orderReference: orderRef, status: 'accept', time: responseTime, signature });
+        const signature = crypto
+            .createHmac('md5', MERCHANT_SECRET_KEY) // ВИКОРИСТОВУЄМО HMAC
+            .update(responseStr)
+            .digest('hex');
+            
+        console.log('📤 Відправляємо відповідь WayForPay...');
+        
+        res.json({ 
+            orderReference: orderRef, 
+            status: 'accept', 
+            time: responseTime, 
+            signature: signature 
+        });
     }
 });
-
-// Також додайте цей middleware для логування всіх запитів до callback
-app.use('/server-callback', (req, res, next) => {
-    console.log('📞 Incoming request to /server-callback');
-    console.log('   Method:', req.method);
-    console.log('   Content-Type:', req.headers['content-type']);
-    console.log('   Content-Length:', req.headers['content-length']);
-    next();
-});
-
 // ✅ Маршрут для створення платежу
 const generateOrderId = () => 'ORDER-' + Date.now();
 
@@ -407,32 +402,159 @@ app.post('/create-payment', (req, res) => {
     }
 });
 
+// Маршрут для успішної оплати
+app.get('/payment-success', (req, res) => {
+    try {
+        const { orderReference } = req.query;
+        
+        if (!orderReference) {
+            console.warn('⚠️ Відсутній orderReference в success URL');
+            return res.redirect('/success.html?error=no_order_reference');
+        }
+
+        console.log(`✅ Користувач перенаправлений на сторінку успіху для замовлення: ${orderReference}`);
+        
+        // Перевіряємо статус замовлення
+        const allOrders = readOrders();
+        const order = allOrders.orders[orderReference];
+        
+        if (order) {
+            res.render('payment-success', {
+                orderReference: orderReference,
+                courseName: order.courseName,
+                customerName: order.name,
+                amount: order.price,
+                telegramBotUrl: process.env.TELEGRAM_BOT_URL || 'https://t.me/Tinas_cursuribot'
+            });
+        } else {
+            console.warn(`⚠️ Замовлення ${orderReference} не знайдено в базі`);
+            res.render('payment-success', {
+                orderReference: orderReference,
+                courseName: 'Курс TinaSchool',
+                customerName: 'Шановний клієнт',
+                amount: '',
+                telegramBotUrl: process.env.TELEGRAM_BOT_URL || 'https://t.me/Tinas_cursuribot'
+            });
+        }
+        
+    } catch (error) {
+        console.error('❌ Помилка на сторінці успіху:', error);
+        res.redirect('/success.html?error=processing_error');
+    }
+});
+
+// Маршрут для неуспішної оплати
+app.get('/payment-failed', (req, res) => {
+    try {
+        const { orderReference, reason, reasonCode } = req.query;
+        
+        console.log(`❌ Користувач перенаправлений на сторінку помилки для замовлення: ${orderReference || 'невідомо'}`);
+        console.log(`   Причина: ${reason || 'невідома'}, код: ${reasonCode || 'невідомий'}`);
+        
+        // Перевіряємо статус замовлення якщо є orderReference
+        let order = null;
+        if (orderReference) {
+            const allOrders = readOrders();
+            order = allOrders.orders[orderReference];
+        }
+
+        // Визначаємо текст помилки на основі коду
+        let errorMessage = 'Сталася помилка при обробці платежу';
+        let errorDetails = reason || 'Невідома причина';
+        
+        switch (reasonCode) {
+            case '1101':
+                errorMessage = 'Платіж відхилений банком';
+                errorDetails = 'Банк-емітент відхилив транзакцію. Спробуйте іншу картку або зв\'яжіться з банком.';
+                break;
+            case '1102':
+                errorMessage = 'Недостатньо коштів на картці';
+                errorDetails = 'На вашій картці недостатньо коштів для здійснення платежу.';
+                break;
+            case '1103':
+                errorMessage = 'Картка заблокована';
+                errorDetails = 'Ваша картка заблокована. Зв\'яжіться з банком для розблокування.';
+                break;
+            case '1104':
+                errorMessage = 'Неправильні дані картки';
+                errorDetails = 'Перевірте правильність введених даних картки.';
+                break;
+            case '1105':
+                errorMessage = 'Час дії картки закінчився';
+                errorDetails = 'Термін дії вашої картки закінчився. Використайте іншу картку.';
+                break;
+            default:
+                if (reasonCode) {
+                    errorMessage = `Помилка платежу (код: ${reasonCode})`;
+                }
+        }
+        
+        res.render('payment-failed', {
+            orderReference: orderReference || 'Невідомо',
+            courseName: order ? order.courseName : 'Курс TinaSchool',
+            customerName: order ? order.name : 'Шановний клієнт',
+            amount: order ? order.price : '',
+            errorMessage: errorMessage,
+            errorDetails: errorDetails,
+            reason: reason || 'Невідома причина',
+            reasonCode: reasonCode || 'Невідомий код',
+            supportEmail: process.env.EMAIL_FROM || 'support@tinaschool.vip'
+        });
+        
+    } catch (error) {
+        console.error('❌ Помилка на сторінці невдачі:', error);
+        res.redirect('/failure.html?error=processing_error');
+    }
+});
 
 // Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
 app.all('/payment-return', (req, res) => {
     try {
         console.log(`➡️ Користувач повернувся на сайт. Метод: ${req.method}.`);
+        console.log('📦 Query params:', req.query);
+        console.log('📦 Body params:', req.body);
         
-        // Спочатку перевіряємо req.query (для GET-запитів), потім req.body (для POST).
-        const orderId = req.query.orderReference || (req.body && req.body.orderReference);
+        // Отримуємо дані з query або body
+        const orderReference = req.query.orderReference || req.body?.orderReference;
+        const transactionStatus = req.query.transactionStatus || req.body?.transactionStatus;
+        const reason = req.query.reason || req.body?.reason;
+        const reasonCode = req.query.reasonCode || req.body?.reasonCode;
 
-        if (!orderId) {
+        if (!orderReference) {
             console.error('❌ WayForPay не повернув orderReference при поверненні клієнта.');
-            // Якщо ID замовлення немає, перенаправляємо на сторінку загальної помилки.
-            return res.redirect('/failure.html?error=no_order_id_returned');
+            return res.redirect('/payment-failed?error=no_order_id_returned');
         }
 
-        console.log(`⏳ Користувач повернувся для замовлення: ${orderId}. Перенаправлення на сторінку перевірки статусу.`);
+        console.log(`⏳ Користувач повернувся для замовлення: ${orderReference}`);
+        console.log(`📊 Статус транзакції: ${transactionStatus}`);
+
+        // Перевіряємо статус в нашій базі даних
+        const allOrders = readOrders();
+        const order = allOrders.orders[orderReference];
         
-        // Перенаправляємо на сторінку статусу з КОНКРЕТНИМ ID замовлення
-        res.redirect(`/status.html?order_id=${orderId}`);
+        if (!order) {
+            console.error(`❌ Замовлення ${orderReference} не знайдено в базі`);
+            return res.redirect(`/payment-failed?orderReference=${orderReference}&reason=Order not found&reasonCode=404`);
+        }
+
+        // Перенаправляємо на відповідну сторінку в залежності від статусу
+        if (transactionStatus === 'Approved' || order.status === 'paid') {
+            console.log(`✅ Перенаправлення на сторінку успіху для замовлення: ${orderReference}`);
+            res.redirect(`/payment-success?orderReference=${orderReference}`);
+        } else if (transactionStatus === 'Declined') {
+            console.log(`❌ Перенаправлення на сторінку помилки для замовлення: ${orderReference}`);
+            res.redirect(`/payment-failed?orderReference=${orderReference}&reason=${encodeURIComponent(reason || 'Payment declined')}&reasonCode=${reasonCode || '1101'}`);
+        } else {
+            // Якщо статус невизначений, перенаправляємо на сторінку перевірки
+            console.log(`⏳ Статус невизначений, перенаправлення на сторінку перевірки: ${orderReference}`);
+            res.redirect(`/status.html?order_id=${orderReference}`);
+        }
 
     } catch (error) {
         console.error('❌ Критична помилка в /payment-return:', error);
-        res.redirect('/failure.html?error=return_processing_error');
+        res.redirect('/payment-failed?error=return_processing_error');
     }
 });
-
 // Маршрут для перевірки статусу оплати (використовується в status.html)  
 app.get('/get-payment-status', (req, res) => {
     try {
