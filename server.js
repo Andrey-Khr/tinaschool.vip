@@ -249,20 +249,24 @@ app.post('/server-callback', upload.none(), async (req, res) => {
         }
         console.log('🔍 Отримані дані:', JSON.stringify(paymentData, null, 2));
 
-        const { orderReference, transactionStatus, createdDate, merchantSignature } = paymentData;
+        const { 
+            orderReference, 
+            transactionStatus, 
+            processingDate,  // ⚠️ ВАЖЛИВО: використовуємо processingDate замість createdDate
+            merchantSignature 
+        } = paymentData;
 
-        if (!orderReference || !transactionStatus || !createdDate || !merchantSignature) {
+        if (!orderReference || !transactionStatus || !processingDate || !merchantSignature) {
             console.warn('⚠️ Відсутні необхідні поля в callback-запиті.');
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // --- ФІНАЛЬНЕ ВИПРАВЛЕННЯ: Гарантуємо, що всі частини є рядками ---
+        // ✅ ВИПРАВЛЕНО: Використовуємо processingDate для підпису
         const stringToSign = [
             String(orderReference), 
             String(transactionStatus), 
-            String(createdDate)
+            String(processingDate)  // Тут було createdDate - це помилка!
         ].join(';');
-        // --- КІНЕЦЬ ФІНАЛЬНОГО ВИПРАВЛЕННЯ ---
 
         const expectedSignature = crypto
             .createHmac('md5', MERCHANT_SECRET_KEY)
@@ -290,8 +294,8 @@ app.post('/server-callback', upload.none(), async (req, res) => {
                     customerOrder.wayforpayData = paymentData;
                     writeOrders(allOrders);
 
-                    sendPaymentConfirmationEmail(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference);
-                    sendAdminNotification(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price);
+                    await sendPaymentConfirmationEmail(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference);
+                    await sendAdminNotification(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price);
                     metrics.successfulPayments++;
                 }
             } else if (customerOrder && customerOrder.status === 'paid') {
@@ -303,10 +307,13 @@ app.post('/server-callback', upload.none(), async (req, res) => {
     } catch (error) {
         console.error('❌ Критична помилка обробки callback:', error);
     } finally {
-        const responseTime = Math.floor(Date.now() / 1000);
+        // ✅ ВИПРАВЛЕНО: Використовуємо processingDate з paymentData
+        const responseTime = paymentData?.processingDate || Math.floor(Date.now() / 1000);
         const orderRef = paymentData?.orderReference || 'unknown';
         const responseStr = [orderRef, 'accept', responseTime].join(';');
         const signature = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(responseStr).digest('hex');
+        
+        console.log('📤 Відповідь WayForPay:', { orderReference: orderRef, status: 'accept', time: responseTime, signature });
         res.json({ orderReference: orderRef, status: 'accept', time: responseTime, signature });
     }
 });
@@ -397,24 +404,67 @@ app.post('/create-payment', (req, res) => {
     }
 });
 
+app.use('/payment-return', (req, res, next) => {
+    console.log('🔄 Incoming request to /payment-return');
+    console.log('   Method:', req.method);
+    console.log('   Content-Type:', req.headers['content-type']);
+    console.log('   Raw body keys:', Object.keys(req.body));
+    console.log('   Query string:', req.url);
+    
+    // Якщо це POST з одним ключем, спробуємо його розпарсити
+    if (req.method === 'POST' && Object.keys(req.body).length === 1) {
+        const key = Object.keys(req.body)[0];
+        console.log('   Trying to parse key:', key.substring(0, 100) + '...');
+        try {
+            const parsed = JSON.parse(key);
+            console.log('   Parsed orderReference:', parsed.orderReference);
+        } catch (e) {
+            console.log('   Key is not JSON');
+        }
+    }
+    
+    next();
+});
 
 // Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
 app.all('/payment-return', (req, res) => {
     try {
         console.log(`➡️ Користувач повернувся на сайт. Метод: ${req.method}.`);
+        console.log('🔍 Query params:', req.query);
+        console.log('🔍 Body params:', req.body);
         
-        // Спочатку перевіряємо req.query (для GET-запитів), потім req.body (для POST).
-        const orderId = req.query.orderReference || (req.body && req.body.orderReference);
+        let orderId;
+        let paymentData;
+
+        // Для POST запитів WayForPay може надсилати дані в тілі
+        if (req.method === 'POST' && req.body) {
+            // Якщо дані приходять як JSON в ключі (як у callback)
+            if (Object.keys(req.body).length === 1 && typeof Object.keys(req.body)[0] === 'string') {
+                try {
+                    paymentData = JSON.parse(Object.keys(req.body)[0]);
+                    orderId = paymentData.orderReference;
+                } catch (e) {
+                    console.log('📋 Не JSON дані, перевіряємо як звичайні поля');
+                    orderId = req.body.orderReference;
+                }
+            } else {
+                orderId = req.body.orderReference;
+            }
+        }
+        
+        // Якщо в POST не знайшли, шукаємо в GET параметрах
+        if (!orderId) {
+            orderId = req.query.orderReference;
+        }
+
+        console.log('🆔 Знайдений Order ID:', orderId);
 
         if (!orderId) {
             console.error('❌ WayForPay не повернув orderReference при поверненні клієнта.');
-            // Якщо ID замовлення немає, перенаправляємо на сторінку загальної помилки.
             return res.redirect('/failure.html?error=no_order_id_returned');
         }
 
         console.log(`⏳ Користувач повернувся для замовлення: ${orderId}. Перенаправлення на сторінку перевірки статусу.`);
-        
-        // Перенаправляємо на сторінку статусу з КОНКРЕТНИМ ID замовлення
         res.redirect(`/status.html?order_id=${orderId}`);
 
     } catch (error) {
