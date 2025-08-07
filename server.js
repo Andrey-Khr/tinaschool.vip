@@ -233,12 +233,13 @@ app.get('/stats', (req, res) => {
 
 // Створення платежу з валідацією
 app.post('/server-callback', upload.none(), async (req, res) => {
+   
+   let paymentData;
+
     try {
         console.log('📞 Callback отримано від WayForPay');
         console.log('📅 Час:', new Date().toISOString());
-
-        let paymentData;
-            
+         
         if (
             Object.keys(req.body).length === 1 &&
             typeof Object.keys(req.body)[0] === 'string' &&
@@ -265,7 +266,7 @@ app.post('/server-callback', upload.none(), async (req, res) => {
 
         const stringToSign = `${orderReference};${transactionStatus};${createdDate}`;
         const expectedSignature = crypto
-        .createHmac('md5', MERCHANT_SECRET_KEY)
+        .createHmac('md5', process.env.MERCHANT_SECRET_KEY)
         .update(stringToSign)
         .digest('hex');
 
