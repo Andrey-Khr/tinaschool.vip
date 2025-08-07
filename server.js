@@ -12,25 +12,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
-
 const upload = multer();
-
-const handleWayForPayData = (req, res, next) => {
-    const contentType = req.headers['content-type'];
-    
-    // Для application/x-www-form-urlencoded
-    if (contentType && contentType.includes('application/x-www-form-urlencoded')) {
-        return upload.none()(req, res, next);
-    }
-    
-    // Для multipart/form-data
-    if (contentType && contentType.includes('multipart/form-data')) {
-        return upload.any()(req, res, next);
-    }
-    
-    // Для application/json або інших типів
-    next();
-};
 
 // --- Робота з файлом для зберігання замовлень ---
 const ORDERS_FILE_PATH = path.join(__dirname, 'orders.json');
@@ -249,13 +231,12 @@ app.get('/stats', (req, res) => {
 });
 
 // Створення платежу з валідацією
-app.post('/server-callback', handleWayForPayData, async (req, res) => {
-     let paymentData; // ⚠️ ВАЖЛИВО: оголошуємо на початку функції
-    
+app.post('/server-callback', upload.none(), async (req, res) => {
     try {
         console.log('📞 Callback отримано від WayForPay');
         console.log('📅 Час:', new Date().toISOString());
 
+        let paymentData;
         if (Object.keys(req.body).length === 1 && typeof Object.keys(req.body)[0] === 'string') {
             try {
                 paymentData = JSON.parse(Object.keys(req.body)[0]);
@@ -268,99 +249,64 @@ app.post('/server-callback', handleWayForPayData, async (req, res) => {
         }
         console.log('🔍 Отримані дані:', JSON.stringify(paymentData, null, 2));
 
-        const { 
-            merchantAccount,
-            orderReference, 
-            transactionStatus, 
-            processingDate,
-            amount,
-            merchantSignature 
-        } = paymentData;
+        const { orderReference, transactionStatus, createdDate, merchantSignature } = paymentData;
 
-        if (!orderReference || !transactionStatus || !processingDate || !merchantSignature) {
+        if (!orderReference || !transactionStatus || !createdDate || !merchantSignature) {
             console.warn('⚠️ Відсутні необхідні поля в callback-запиті.');
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // ✅ Спробуємо різні варіанти підпису для WayForPay callback
-        // Варіант 1: merchantAccount;orderReference;transactionStatus;processingDate
-        const signatureStr1 = [
-            String(merchantAccount || MERCHANT_ACCOUNT),
+        // --- ФІНАЛЬНЕ ВИПРАВЛЕННЯ: Гарантуємо, що всі частини є рядками ---
+        const stringToSign = [
             String(orderReference), 
             String(transactionStatus), 
-            String(processingDate)
+            String(createdDate)
         ].join(';');
-        
-        // Варіант 2: orderReference;transactionStatus;processingDate  
-        const signatureStr2 = [
-            String(orderReference), 
-            String(transactionStatus), 
-            String(processingDate)
-        ].join(';');
+        // --- КІНЕЦЬ ФІНАЛЬНОГО ВИПРАВЛЕННЯ ---
 
-        // Варіант 3: merchantAccount;orderReference;amount;transactionStatus;processingDate
-        const signatureStr3 = [
-            String(merchantAccount || MERCHANT_ACCOUNT),
-            String(orderReference),
-            String(amount),
-            String(transactionStatus), 
-            String(processingDate)
-        ].join(';');
-
-        const expectedSig1 = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(signatureStr1).digest('hex');
-        const expectedSig2 = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(signatureStr2).digest('hex');
-        const expectedSig3 = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(signatureStr3).digest('hex');
+        const expectedSignature = crypto
+            .createHmac('md5', MERCHANT_SECRET_KEY)
+            .update(stringToSign)
+            .digest('hex');
 
         console.log('🔍 Перевірка підпису:');
-        console.log('   Варіант 1:', signatureStr1, '→', expectedSig1);
-        console.log('   Варіант 2:', signatureStr2, '→', expectedSig2);
-        console.log('   Варіант 3:', signatureStr3, '→', expectedSig3);
+        console.log('   Рядок для підпису:', stringToSign);
+        console.log('   Очікуваний підпис:', expectedSignature);
         console.log('   Отриманий підпис:', merchantSignature);
-        
-        const signatureValid = (expectedSig1 === merchantSignature || 
-                               expectedSig2 === merchantSignature || 
-                               expectedSig3 === merchantSignature);
-        
-        console.log('   Підписи збігаються:', signatureValid);
+        console.log('   Підписи збігаються:', expectedSignature === merchantSignature);
 
-        if (!signatureValid) {
-            console.warn('❌ Неправильний підпис для всіх варіантів. Але продовжуємо обробку...');
-            // ⚠️ Тимчасово продовжуємо обробку навіть з неправильним підписом для тестування
-        }
-
-        // Обробляємо замовлення незалежно від підпису (для тестування)
-        const allOrders = readOrders();
-        const customerOrder = allOrders.orders[orderReference];
-
-        if (customerOrder && customerOrder.status !== 'paid') {
-            if (transactionStatus === 'Approved') {
-                console.log('✅ Статус оплати підтверджено.');
-                customerOrder.status = 'paid';
-                customerOrder.paidAt = new Date().toISOString();
-                customerOrder.wayforpayData = paymentData;
-                writeOrders(allOrders);
-
-                await sendPaymentConfirmationEmail(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference);
-                await sendAdminNotification(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price);
-                metrics.successfulPayments++;
-                console.log('✅ Замовлення успішно оброблено');
-            }
-        } else if (customerOrder && customerOrder.status === 'paid') {
-            console.log('🔁 Замовлення вже було оплачено.');
+        if (expectedSignature !== merchantSignature) {
+            console.warn('❌ Неправильний підпис. Обробку зупинено. ПЕРЕВІРТЕ SECRET KEY!');
         } else {
-            console.error('❌ Замовлення не знайдено:', orderReference);
-        }
+            console.log('✅ Підпис вірний. Продовжуємо обробку.');
+            const allOrders = readOrders();
+            const customerOrder = allOrders.orders[orderReference];
 
+            if (customerOrder && customerOrder.status !== 'paid') {
+                if (transactionStatus === 'Approved') {
+                    console.log('✅ Статус оплати підтверджено.');
+                    customerOrder.status = 'paid';
+                    customerOrder.paidAt = new Date().toISOString();
+                    customerOrder.wayforpayData = paymentData;
+                    writeOrders(allOrders);
+
+                    sendPaymentConfirmationEmail(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference);
+                    sendAdminNotification(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price);
+                    metrics.successfulPayments++;
+                }
+            } else if (customerOrder && customerOrder.status === 'paid') {
+                console.log('🔁 Замовлення вже було оплачено.');
+            } else {
+                console.error('❌ Замовлення не знайдено:', orderReference);
+            }
+        }
     } catch (error) {
         console.error('❌ Критична помилка обробки callback:', error);
     } finally {
-        // ✅ ВИПРАВЛЕНО: використовуємо безпечні значення за замовчуванням
-        const responseTime = (paymentData && paymentData.processingDate) || Math.floor(Date.now() / 1000);
-        const orderRef = (paymentData && paymentData.orderReference) || 'unknown';
+        const responseTime = Math.floor(Date.now() / 1000);
+        const orderRef = paymentData?.orderReference || 'unknown';
         const responseStr = [orderRef, 'accept', responseTime].join(';');
         const signature = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(responseStr).digest('hex');
-        
-        console.log('📤 Відповідь WayForPay:', { orderReference: orderRef, status: 'accept', time: responseTime, signature });
         res.json({ orderReference: orderRef, status: 'accept', time: responseTime, signature });
     }
 });
@@ -451,82 +397,30 @@ app.post('/create-payment', (req, res) => {
     }
 });
 
+
 // Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
 app.all('/payment-return', (req, res) => {
     try {
         console.log(`➡️ Користувач повернувся на сайт. Метод: ${req.method}.`);
-        console.log('🔍 Query params:', req.query);
-        console.log('🔍 Body params:', req.body);
         
-        let orderId;
-        let paymentData;
-
-        // ⚠️ ВАЖЛИВО: перевіряємо, чи req.body не є null/undefined
-        if (req.method === 'POST' && req.body && typeof req.body === 'object') {
-            // Якщо дані приходять як JSON в ключі (як у callback)
-            const bodyKeys = Object.keys(req.body);
-            if (bodyKeys.length === 1 && typeof bodyKeys[0] === 'string') {
-                try {
-                    paymentData = JSON.parse(bodyKeys[0]);
-                    orderId = paymentData.orderReference;
-                    console.log('📋 Розпарсено JSON з POST body');
-                } catch (e) {
-                    console.log('📋 Не JSON дані, перевіряємо як звичайні поля');
-                    orderId = req.body.orderReference;
-                }
-            } else {
-                orderId = req.body.orderReference;
-            }
-        }
-        
-        // Якщо в POST не знайшли, шукаємо в GET параметрах
-        if (!orderId && req.query) {
-            orderId = req.query.orderReference;
-        }
-
-        console.log('🆔 Знайдений Order ID:', orderId);
+        // Спочатку перевіряємо req.query (для GET-запитів), потім req.body (для POST).
+        const orderId = req.query.orderReference || (req.body && req.body.orderReference);
 
         if (!orderId) {
             console.error('❌ WayForPay не повернув orderReference при поверненні клієнта.');
+            // Якщо ID замовлення немає, перенаправляємо на сторінку загальної помилки.
             return res.redirect('/failure.html?error=no_order_id_returned');
         }
 
         console.log(`⏳ Користувач повернувся для замовлення: ${orderId}. Перенаправлення на сторінку перевірки статусу.`);
+        
+        // Перенаправляємо на сторінку статусу з КОНКРЕТНИМ ID замовлення
         res.redirect(`/status.html?order_id=${orderId}`);
 
     } catch (error) {
         console.error('❌ Критична помилка в /payment-return:', error);
         res.redirect('/failure.html?error=return_processing_error');
     }
-});
-
-// ✅ ВИПРАВЛЕНИЙ middleware для логування з перевіркою на null
-app.use('/payment-return', (req, res, next) => {
-    console.log('🔄 Incoming request to /payment-return');
-    console.log('   Method:', req.method);
-    console.log('   Content-Type:', req.headers['content-type']);
-    
-    // ⚠️ Безпечна перевірка req.body
-    if (req.body && typeof req.body === 'object') {
-        console.log('   Raw body keys:', Object.keys(req.body));
-        
-        // Якщо це POST з одним ключем, спробуємо його розпарсити
-        if (req.method === 'POST' && Object.keys(req.body).length === 1) {
-            const key = Object.keys(req.body)[0];
-            console.log('   Trying to parse key:', key ? key.substring(0, 100) + '...' : 'empty key');
-            try {
-                const parsed = JSON.parse(key);
-                console.log('   Parsed orderReference:', parsed.orderReference);
-            } catch (e) {
-                console.log('   Key is not JSON');
-            }
-        }
-    } else {
-        console.log('   Body is null/undefined or not object');
-    }
-    
-    console.log('   Query string:', req.url);
-    next();
 });
 
 // Маршрут для перевірки статусу оплати (використовується в status.html)  
