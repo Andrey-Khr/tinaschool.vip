@@ -264,19 +264,18 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
     
-         const stringToSign = `${orderReference};${transactionStatus};${createdDate}`;
+      const secretKey = '0c37a504e97568497e246f9c00cb3d719f7f4373'; // замість process.env.MERCHANT_SECRET_KEY
 
+const stringToSign = [
+  String(orderReference).trim(),
+  String(transactionStatus).trim(),
+  String(createdDate).trim()
+].join(';');
 
-        console.log('🧪 Типи:', {
-        orderReference: typeof orderReference,
-        transactionStatus: typeof transactionStatus,
-        createdDate: typeof createdDate
-        });
-
-        const expectedSignature = crypto
-        .createHmac('md5', process.env.MERCHANT_SECRET_KEY)
-        .update(stringToSign)
-        .digest('hex');
+const expectedSignature = crypto
+  .createHmac('md5', secretKey)
+  .update(stringToSign)
+  .digest('hex');
 
         console.log('🔍 Перевірка підпису:');
         console.log('   Рядок для підпису:', stringToSign);
