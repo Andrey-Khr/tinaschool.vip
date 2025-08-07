@@ -373,7 +373,7 @@ app.post('/create-payment', (req, res) => {
             productPrice: [parseFloat(price)],
             productCount: [1],
             clientEmail: email,
-            returnUrl: `${req.protocol}://${req.get('host')}/payment-return`,
+            returnUrl: `${req.protocol}://${req.get('host')}/payment-return?orderReference=${orderReference}`,
             serviceUrl: `${req.protocol}://${req.get('host')}/server-callback`
         };
 
