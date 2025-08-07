@@ -9,6 +9,7 @@ require('dotenv').config();
 
 const app = express();
 app.use(express.json());
+console.log('🔑 SECRET_KEY:', process.env.SECRET_KEY);
 app.use(express.urlencoded({ extended: true }));
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
