@@ -237,16 +237,22 @@ app.post('/server-callback', upload.none(), async (req, res) => {
         console.log('📅 Час:', new Date().toISOString());
 
         let paymentData;
-        if (Object.keys(req.body).length === 1 && typeof Object.keys(req.body)[0] === 'string') {
+            
+        if (
+            Object.keys(req.body).length === 1 &&
+            typeof Object.keys(req.body)[0] === 'string' &&
+            req.headers['content-type'] === 'application/x-www-form-urlencoded'
+        ) {
             try {
                 paymentData = JSON.parse(Object.keys(req.body)[0]);
-                console.log('✅ JSON успішно розпарсено з ключа');
             } catch (e) {
-                paymentData = req.body;
+                console.warn('⚠️ Неможливо розпарсити JSON з ключа:', e.message);
+                return res.status(400).send('Invalid JSON format in callback');
             }
         } else {
             paymentData = req.body;
         }
+
         console.log('🔍 Отримані дані:', JSON.stringify(paymentData, null, 2));
 
         const { orderReference, transactionStatus, createdDate, merchantSignature } = paymentData;
@@ -469,4 +475,5 @@ app.listen(PORT, () => {
     console.log(`🚀 Сервер запущено на http://localhost:${PORT}`);
     console.log(`📊 Статистика доступна на http://localhost:${PORT}/stats`);
     console.log(`📧 Email: ${EMAIL_USER} → ${EMAIL_HOST}:${EMAIL_PORT}`);
+
 });
