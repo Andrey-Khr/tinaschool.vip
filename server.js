@@ -73,12 +73,6 @@ const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
 const EMAIL_FROM = process.env.EMAIL_FROM || process.env.EMAIL_USER;
 
-// Debug перевірка змінних середовища при запуску
-console.log('🔑 Environment check:');
-console.log('   MERCHANT_ACCOUNT:', MERCHANT_ACCOUNT ? '✅ SET' : '❌ MISSING');
-console.log('   MERCHANT_SECRET_KEY:', MERCHANT_SECRET_KEY ? '✅ SET (length: ' + MERCHANT_SECRET_KEY.length + ')' : '❌ MISSING');
-console.log('   MERCHANT_DOMAIN_NAME:', MERCHANT_DOMAIN_NAME ? '✅ SET' : '❌ MISSING');
-
 // Метрики для моніторингу
 const metrics = {
     totalOrders: 0,
@@ -90,7 +84,7 @@ const metrics = {
 };
 
 // Налаштування транспорту для email
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
     host: EMAIL_HOST,
     port: EMAIL_PORT,
     secure: EMAIL_PORT === 465,
@@ -224,7 +218,6 @@ app.set('views', path.join(__dirname, 'views'));
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 */
-
 // Маршрут для статистики
 app.get('/stats', (req, res) => {
     const uptime = Date.now() - metrics.startTime;
@@ -237,184 +230,93 @@ app.get('/stats', (req, res) => {
     });
 });
 
-// ✅ ПОВНІСТЮ ВИПРАВЛЕНИЙ маршрут /server-callback
+// Створення платежу з валідацією
 app.post('/server-callback', upload.none(), async (req, res) => {
-    let paymentData = null; // ✅ Оголошуємо змінну на початку з null
-    
     try {
         console.log('📞 Callback отримано від WayForPay');
         console.log('📅 Час:', new Date().toISOString());
-        
-        // Debug інформація
-        console.log('🔧 DEBUG INFO:');
-        console.log('   MERCHANT_ACCOUNT:', MERCHANT_ACCOUNT);
-        console.log('   SECRET_KEY length:', MERCHANT_SECRET_KEY ? MERCHANT_SECRET_KEY.length : 'NOT SET');
-        console.log('   Raw body keys:', Object.keys(req.body));
 
-        // Парсинг даних
+        let paymentData;
         if (Object.keys(req.body).length === 1 && typeof Object.keys(req.body)[0] === 'string') {
             try {
                 paymentData = JSON.parse(Object.keys(req.body)[0]);
                 console.log('✅ JSON успішно розпарсено з ключа');
             } catch (e) {
-                console.log('📝 Використовуємо raw body');
                 paymentData = req.body;
             }
         } else {
             paymentData = req.body;
         }
-        
         console.log('🔍 Отримані дані:', JSON.stringify(paymentData, null, 2));
 
-        const { 
-            merchantAccount,
-            orderReference, 
-            transactionStatus, 
-            createdDate, 
-            merchantSignature,
-            amount,
-            currency 
-        } = paymentData || {};
+        const { orderReference, transactionStatus, createdDate, merchantSignature } = paymentData;
 
         if (!orderReference || !transactionStatus || !createdDate || !merchantSignature) {
             console.warn('⚠️ Відсутні необхідні поля в callback-запиті.');
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // ✅ СПРОЩЕНА перевірка підпису з трьома варіантами
-        let isSignatureValid = false;
-        
-        // Варіант 1: merchantAccount;orderReference;transactionStatus;createdDate
-        const stringToSign1 = [
-            String(merchantAccount || MERCHANT_ACCOUNT),
+        // --- ФІНАЛЬНЕ ВИПРАВЛЕННЯ: Гарантуємо, що всі частини є рядками ---
+        const stringToSign = [
             String(orderReference), 
             String(transactionStatus), 
             String(createdDate)
         ].join(';');
-        
-        const expectedSignature1 = crypto
+        // --- КІНЕЦЬ ФІНАЛЬНОГО ВИПРАВЛЕННЯ ---
+
+        const expectedSignature = crypto
             .createHmac('md5', MERCHANT_SECRET_KEY)
-            .update(stringToSign1)
-            .digest('hex');
-        
-        // Варіант 2: orderReference;transactionStatus;createdDate (ваш поточний)
-        const stringToSign2 = [
-            String(orderReference), 
-            String(transactionStatus), 
-            String(createdDate)
-        ].join(';');
-        
-        const expectedSignature2 = crypto
-            .createHmac('md5', MERCHANT_SECRET_KEY)
-            .update(stringToSign2)
-            .digest('hex');
-            
-        // Варіант 3: з amount та currency
-        const stringToSign3 = [
-            String(orderReference),
-            String(amount),
-            String(currency),
-            String(merchantAccount || MERCHANT_ACCOUNT),
-            String(transactionStatus),
-            String(createdDate)
-        ].join(';');
-        
-        const expectedSignature3 = crypto
-            .createHmac('md5', MERCHANT_SECRET_KEY)
-            .update(stringToSign3)
+            .update(stringToSign)
             .digest('hex');
 
-        console.log('🔍 Перевірка підписів:');
-        console.log('   Варіант 1 (з merchantAccount):', stringToSign1);
-        console.log('   Очікуваний підпис 1:', expectedSignature1);
-        console.log('   Варіант 2 (без merchantAccount):', stringToSign2);
-        console.log('   Очікуваний підпис 2:', expectedSignature2);
-        console.log('   Варіант 3 (повний):', stringToSign3);
-        console.log('   Очікуваний підпис 3:', expectedSignature3);
+        console.log('🔍 Перевірка підпису:');
+        console.log('   Рядок для підпису:', stringToSign);
+        console.log('   Очікуваний підпис:', expectedSignature);
         console.log('   Отриманий підпис:', merchantSignature);
-        
-        if (expectedSignature1 === merchantSignature) {
-            console.log('✅ Підпис вірний (варіант 1)');
-            isSignatureValid = true;
-        } else if (expectedSignature2 === merchantSignature) {
-            console.log('✅ Підпис вірний (варіант 2)');
-            isSignatureValid = true;
-        } else if (expectedSignature3 === merchantSignature) {
-            console.log('✅ Підпис вірний (варіант 3)');
-            isSignatureValid = true;
+        console.log('   Підписи збігаються:', expectedSignature === merchantSignature);
+
+        if (expectedSignature !== merchantSignature) {
+            console.warn('❌ Неправильний підпис. Обробку зупинено. ПЕРЕВІРТЕ SECRET KEY!');
         } else {
-            console.warn('❌ Жоден варіант підпису не підійшов. Продовжуємо обробку для тестування.');
-            // Для production розкоментуйте наступний рядок:
-            // return res.status(400).json({ error: 'Invalid signature' });
-        }
+            console.log('✅ Підпис вірний. Продовжуємо обробку.');
+            const allOrders = readOrders();
+            const customerOrder = allOrders.orders[orderReference];
 
-        // Обробка замовлення
-        const allOrders = readOrders();
-        const customerOrder = allOrders.orders[orderReference];
+            if (customerOrder && customerOrder.status !== 'paid') {
+                if (transactionStatus === 'Approved') {
+                    console.log('✅ Статус оплати підтверджено.');
+                    customerOrder.status = 'paid';
+                    customerOrder.paidAt = new Date().toISOString();
+                    customerOrder.wayforpayData = paymentData;
+                    writeOrders(allOrders);
 
-        if (customerOrder && customerOrder.status !== 'paid') {
-            if (transactionStatus === 'Approved') {
-                console.log('✅ Статус оплати підтверджено.');
-                customerOrder.status = 'paid';
-                customerOrder.paidAt = new Date().toISOString();
-                customerOrder.wayforpayData = paymentData;
-                writeOrders(allOrders);
-
-                // Відправляємо email асинхронно
-                Promise.all([
-                    sendPaymentConfirmationEmail(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference),
-                    sendAdminNotification(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price)
-                ]).then(() => {
-                    console.log('✅ Всі email відправлені успішно');
-                }).catch(error => {
-                    console.error('❌ Помилка відправки email:', error);
-                });
-
-                metrics.successfulPayments++;
-                console.log('✅ Замовлення успішно оброблено.');
-            } else {
-                console.log(`⚠️ Статус транзакції: ${transactionStatus}`);
-                if (transactionStatus === 'Declined' || transactionStatus === 'Expired') {
-                    metrics.failedPayments++;
+                    sendPaymentConfirmationEmail(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference);
+                    sendAdminNotification(customerOrder.email, customerOrder.name, customerOrder.courseName, orderReference, customerOrder.price);
+                    metrics.successfulPayments++;
                 }
+            } else if (customerOrder && customerOrder.status === 'paid') {
+                console.log('🔁 Замовлення вже було оплачено.');
+            } else {
+                console.error('❌ Замовлення не знайдено:', orderReference);
             }
-        } else if (customerOrder && customerOrder.status === 'paid') {
-            console.log('🔁 Замовлення вже було оплачено. Повторний callback.');
-        } else {
-            console.error('❌ Замовлення не знайдено:', orderReference);
-            console.log('📋 Наявні замовлення:', Object.keys(allOrders.orders));
         }
-
     } catch (error) {
         console.error('❌ Критична помилка обробки callback:', error);
-        console.error('❌ Stack trace:', error.stack);
-        metrics.failedPayments++;
     } finally {
-        // ✅ ВИПРАВЛЕНО: Безпечна перевірка наявності paymentData
         const responseTime = Math.floor(Date.now() / 1000);
-        const orderRef = (paymentData && paymentData.orderReference) ? paymentData.orderReference : 'unknown';
+        const orderRef = paymentData?.orderReference || 'unknown';
         const responseStr = [orderRef, 'accept', responseTime].join(';');
         const signature = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(responseStr).digest('hex');
-        
-        const response = { 
-            orderReference: orderRef, 
-            status: 'accept', 
-            time: responseTime, 
-            signature: signature 
-        };
-        
-        console.log('📤 Відправляємо відповідь WayForPay:', response);
-        res.json(response);
+        res.json({ orderReference: orderRef, status: 'accept', time: responseTime, signature });
     }
 });
 
-// Middleware для логування всіх запитів до callback
+// Також додайте цей middleware для логування всіх запитів до callback
 app.use('/server-callback', (req, res, next) => {
     console.log('📞 Incoming request to /server-callback');
     console.log('   Method:', req.method);
     console.log('   Content-Type:', req.headers['content-type']);
     console.log('   Content-Length:', req.headers['content-length']);
-    console.log('   User-Agent:', req.headers['user-agent']);
     next();
 });
 
@@ -424,34 +326,25 @@ const generateOrderId = () => 'ORDER-' + Date.now();
 app.post('/create-payment', (req, res) => {
     try {
         const { name, email, course } = req.body;
-        
-        // Валідація
-        if (!name || !email || !course) {
-            return res.status(400).json({ error: 'Відсутні обов\'язкові поля' });
-        }
-        
-        if (!isValidEmail(email)) {
-            return res.status(400).json({ error: 'Некоректний email' });
-        }
-        
-        let price;
-        let courseName;
+            let price;
+            let courseName;
 
-        if (course === 'solo') {
-            price = 1; // Ціна для тарифу "Самостійний"
-            courseName = 'Тариф: САМОСТІЙНИЙ';
-        } else if (course === 'support') {
-            price = 777; // Ціна для тарифу "З підтримкою"
-            courseName = 'Тариф: З ПІДТРИМКОЮ';
-        } else {
-            return res.status(400).json({ error: 'Некоректний тариф' });
-        }
+            if (course === 'solo') {
+                price = 1; // Ціна для тарифу "Самостійний"
+                courseName = 'Тариф: САМОСТІЙНИЙ';
+            } else if (course === 'support') {
+                price = 777; // Ціна для тарифу "З підтримкою"
+                courseName = 'Тариф: З ПІДТРИМКОЮ';
+            } else {
+                return res.status(400).json({ error: 'Некоректний тариф' });
+            }
+
 
         const orderReference = generateOrderId();
 
         const newOrder = {
-            name: name.trim(),
-            email: email.toLowerCase().trim(),
+            name,
+            email,
             courseName,
             price,
             status: 'pending',
@@ -462,8 +355,6 @@ app.post('/create-payment', (req, res) => {
         allOrders.orders[orderReference] = newOrder;
         writeOrders(allOrders);
         metrics.totalOrders++;
-        
-        console.log('🆕 Створено нове замовлення:', orderReference);
 
         const orderData = {
             merchantAccount: MERCHANT_ACCOUNT,
@@ -498,8 +389,6 @@ app.post('/create-payment', (req, res) => {
             .digest('hex');
 
         orderData.merchantSignature = merchantSignature;
-        
-        console.log('🔐 Підпис для створення платежу:', merchantSignature);
 
         res.render('redirect-to-wfp', orderData);
     } catch (error) {
@@ -508,23 +397,17 @@ app.post('/create-payment', (req, res) => {
     }
 });
 
-// ✅ Виправлений маршрут для обробки returnUrl від WayForPay
+
+// Маршрут для обробки returnUrl та failUrl від WayForPay (приймає GET і POST)
 app.all('/payment-return', (req, res) => {
     try {
         console.log(`➡️ Користувач повернувся на сайт. Метод: ${req.method}.`);
-        console.log('📋 Query params:', req.query);
-        console.log('📋 Body params:', req.body);
         
         // Спочатку перевіряємо req.query (для GET-запитів), потім req.body (для POST).
-        const orderId = req.query.orderReference || 
-                       (req.body && req.body.orderReference) ||
-                       req.query.order_id ||
-                       (req.body && req.body.order_id);
+        const orderId = req.query.orderReference || (req.body && req.body.orderReference);
 
         if (!orderId) {
             console.error('❌ WayForPay не повернув orderReference при поверненні клієнта.');
-            console.log('📋 Доступні параметри query:', Object.keys(req.query));
-            console.log('📋 Доступні параметри body:', Object.keys(req.body || {}));
             // Якщо ID замовлення немає, перенаправляємо на сторінку загальної помилки.
             return res.redirect('/failure.html?error=no_order_id_returned');
         }
@@ -553,20 +436,14 @@ app.get('/get-payment-status', (req, res) => {
         const order = allOrders.orders[order_id];
 
         if (!order) {
-            console.log('📋 Замовлення не знайдено:', order_id);
-            console.log('📋 Наявні замовлення:', Object.keys(allOrders.orders));
             return res.status(404).json({ error: 'Замовлення не знайдено' });
         }
-
-        console.log('🔍 Статус замовлення', order_id, ':', order.status);
 
         // Повертаємо статус замовлення
         res.json({
             status: order.status === 'paid' ? 'accept' : order.status || 'pending',
             orderId: order_id,
-            courseName: order.courseName,
-            createdAt: order.createdAt,
-            paidAt: order.paidAt || null
+            courseName: order.courseName
         });
 
     } catch (error) {
@@ -574,30 +451,16 @@ app.get('/get-payment-status', (req, res) => {
         res.status(500).json({ error: 'Внутрішня помилка сервера' });
     }
 });
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime()
-    });
-});
-
 // Graceful shutdown
 process.on('SIGTERM', () => {
     console.log('🔄 Отримано сигнал SIGTERM, завершення роботи...');
-    if (transporter) {
-        transporter.close();
-    }
+    transporter.close();
     process.exit(0);
 });
 
 process.on('SIGINT', () => {
     console.log('🔄 Отримано сигнал SIGINT, завершення роботи...');
-    if (transporter) {
-        transporter.close();
-    }
+    transporter.close();
     process.exit(0);
 });
 
