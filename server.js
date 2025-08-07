@@ -264,18 +264,20 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
     
-      const secretKey = '0c37a504e97568497e246f9c00cb3d719f7f4373'; // замість process.env.MERCHANT_SECRET_KEY
 
-const stringToSign = [
-  String(orderReference).trim(),
-  String(transactionStatus).trim(),
-  String(createdDate).trim()
-].join(';');
+            const secretKey = process.env.MERCHANT_SECRET_KEY; // або process.env.MERCHANT_SECRET_KEY
 
-const expectedSignature = crypto
-  .createHmac('md5', secretKey)
-  .update(stringToSign)
-  .digest('hex');
+            // Повний фрагмент коду для заміни (рядки 110-120):
+            const stringToSign = [
+            String(orderReference).trim(),
+            String(transactionStatus).trim(),
+            String(createdDate).trim()
+            ].join(';');
+
+            const expectedSignature = crypto
+            .createHmac('md5', MERCHANT_SECRET_KEY) // Використовуйте змінну оточення!
+            .update(stringToSign)
+            .digest('hex');
 
         console.log('🔍 Перевірка підпису:');
         console.log('   Рядок для підпису:', stringToSign);
