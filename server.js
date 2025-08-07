@@ -263,8 +263,19 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             console.warn('⚠️ Відсутні необхідні поля в callback-запиті.');
             return res.status(400).json({ error: 'Missing required fields' });
         }
+    
+        const stringToSign = [
+        String(orderReference),
+        String(transactionStatus),
+        String(createdDate)
+        ].join(';');
 
-        const stringToSign = `${orderReference};${transactionStatus};${createdDate}`;
+        console.log('🧪 Типи:', {
+        orderReference: typeof orderReference,
+        transactionStatus: typeof transactionStatus,
+        createdDate: typeof createdDate
+        });
+        
         const expectedSignature = crypto
         .createHmac('md5', process.env.MERCHANT_SECRET_KEY)
         .update(stringToSign)
