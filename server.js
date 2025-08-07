@@ -9,7 +9,7 @@ require('dotenv').config();
 
 const app = express();
 app.use(express.json());
-console.log('🔑 SECRET_KEY:', process.env.SECRET_KEY);
+console.log('🔑 SECRET_KEY:', process.env.MERCHANT_SECRET_KEY);
 app.use(express.urlencoded({ extended: true }));
 app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
@@ -263,18 +263,11 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // --- ФІНАЛЬНЕ ВИПРАВЛЕННЯ: Гарантуємо, що всі частини є рядками ---
-        const stringToSign = [
-            String(orderReference), 
-            String(transactionStatus), 
-            String(createdDate)
-        ].join(';');
-        // --- КІНЕЦЬ ФІНАЛЬНОГО ВИПРАВЛЕННЯ ---
-
+        const stringToSign = `${orderReference};${transactionStatus};${createdDate}`;
         const expectedSignature = crypto
-            .createHmac('md5')
-            .update(`${orderReference};${transactionStatus};${createdDate}${MERCHANT_SECRET_KEY}`)
-            .digest('hex');
+        .createHmac('md5', MERCHANT_SECRET_KEY)
+        .update(stringToSign)
+        .digest('hex');
 
         console.log('🔍 Перевірка підпису:');
         console.log('   Рядок для підпису:', stringToSign);
