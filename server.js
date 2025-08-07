@@ -271,8 +271,8 @@ app.post('/server-callback', upload.none(), async (req, res) => {
         // --- КІНЕЦЬ ФІНАЛЬНОГО ВИПРАВЛЕННЯ ---
 
         const expectedSignature = crypto
-            .createHmac('md5', MERCHANT_SECRET_KEY)
-            .update(stringToSign)
+            .createHmac('md5')
+            .update(`${orderReference};${transactionStatus};${createdDate}${MERCHANT_SECRET_KEY}`)
             .digest('hex');
 
         console.log('🔍 Перевірка підпису:');
