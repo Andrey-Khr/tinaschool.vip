@@ -489,7 +489,7 @@ app.post('/create-payment', (req, res) => {
             let courseName;
 
             if (course === 'solo') {
-                price = 1; // Ціна для тарифу "Самостійний"
+                price = 497; // Ціна для тарифу "Самостійний"
                 courseName = 'Тариф: САМОСТІЙНИЙ';
             } else if (course === 'support') {
                 price = 777; // Ціна для тарифу "З підтримкою"
