@@ -232,6 +232,7 @@ app.get('/stats', (req, res) => {
 
 // Створення платежу з валідацією
 // ✅ УНІВЕРСАЛЬНЕ РІШЕННЯ для callback WayForPay
+// ✅ УНІВЕРСАЛЬНЕ РІШЕННЯ для callback WayForPay
 app.post('/server-callback', upload.none(), async (req, res) => {
     try {
         console.log('📞 Callback отримано від WayForPay');
@@ -449,7 +450,7 @@ app.post('/server-callback', upload.none(), async (req, res) => {
     } finally {
         // ✅ Завжди відповідаємо позитивно, щоб WayForPay не повторював запити
         const responseTime = Math.floor(Date.now() / 1000);
-        const orderRef = paymentData?.orderReference || 'unknown';
+        const orderRef = (paymentData && paymentData.orderReference) || 'unknown';
         const responseStr = [orderRef, 'accept', responseTime].join(';');
         const signature = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(responseStr).digest('hex');
         
@@ -560,24 +561,74 @@ app.post('/create-payment', (req, res) => {
 app.all('/payment-return', (req, res) => {
     try {
         console.log(`➡️ Користувач повернувся на сайт. Метод: ${req.method}.`);
+        console.log('🔍 Query params:', req.query);
+        console.log('🔍 Body params:', req.body);
         
-        // Спочатку перевіряємо req.query (для GET-запитів), потім req.body (для POST).
-        const orderId = req.query.orderReference || (req.body && req.body.orderReference);
+        // Спробуємо знайти orderReference у всіх можливих місцях
+        let orderId = req.query.orderReference || 
+                      req.body?.orderReference || 
+                      req.query.order_id ||
+                      req.body?.order_id ||
+                      req.query.orderRef ||
+                      req.body?.orderRef;
 
-        if (!orderId) {
-            console.error('❌ WayForPay не повернув orderReference при поверненні клієнта.');
-            // Якщо ID замовлення немає, перенаправляємо на сторінку загальної помилки.
-            return res.redirect('/failure.html?error=no_order_id_returned');
+        if (orderId) {
+            console.log(`✅ Знайдено orderId: ${orderId}. Перенаправлення на сторінку статусу.`);
+            return res.redirect(`/status.html?order_id=${orderId}`);
         }
 
-        console.log(`⏳ Користувач повернувся для замовлення: ${orderId}. Перенаправлення на сторінку перевірки статусу.`);
+        // Якщо orderReference не знайдено, перенаправляємо на загальну сторінку успіху
+        console.log('ℹ️ orderReference не передано від WayForPay (це нормально).');
+        console.log('📄 Перенаправлення на загальну сторінку успіху.');
         
-        // Перенаправляємо на сторінку статусу з КОНКРЕТНИМ ID замовлення
-        res.redirect(`/status.html?order_id=${orderId}`);
+        // Перенаправляємо на сторінку успіху без конкретного order_id
+        res.redirect('/success.html');
 
     } catch (error) {
         console.error('❌ Критична помилка в /payment-return:', error);
-        res.redirect('/failure.html?error=return_processing_error');
+        res.redirect('/success.html'); // Все одно перенаправляємо на успіх
+    }
+});
+
+// 🔄 Додатковий маршрут для отримання останніх оплачених замовлень (для success.html)
+app.get('/get-recent-payments', (req, res) => {
+    try {
+        const { email } = req.query;
+        
+        if (!email) {
+            return res.status(400).json({ error: 'Email не вказано' });
+        }
+
+        const allOrders = readOrders();
+        const userOrders = Object.entries(allOrders.orders)
+            .filter(([orderId, order]) => 
+                order.email === email && 
+                order.status === 'paid' &&
+                order.paidAt && 
+                // Показуємо тільки оплати за останні 10 хвилин
+                (Date.now() - new Date(order.paidAt).getTime()) < 10 * 60 * 1000
+            )
+            .sort(([,a], [,b]) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime())
+            .slice(0, 3); // Максимум 3 останні оплати
+
+        const recentPayments = userOrders.map(([orderId, order]) => ({
+            orderId,
+            courseName: order.courseName,
+            price: order.price,
+            paidAt: order.paidAt,
+            email: order.email,
+            name: order.name
+        }));
+
+        res.json({ 
+            success: true,
+            payments: recentPayments,
+            count: recentPayments.length
+        });
+
+    } catch (error) {
+        console.error('❌ Помилка отримання останніх платежів:', error);
+        res.status(500).json({ error: 'Внутрішня помилка сервера' });
     }
 });
 
