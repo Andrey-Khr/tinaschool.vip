@@ -215,22 +215,33 @@ async function sendTelegramNotification(email, name, courseName, orderId, price)
 
     try {
         const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-        const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
         
-        // Детальна перевірка наявності змінних
+        // Підтримуємо і старий формат (TELEGRAM_CHAT_ID), і новий (TELEGRAM_CHAT_IDS)
+        const singleChatId = process.env.TELEGRAM_CHAT_ID;
+        const multipleChatIds = process.env.TELEGRAM_CHAT_IDS;
+        
         if (!TELEGRAM_BOT_TOKEN) {
             console.log('⚠️ TELEGRAM_BOT_TOKEN не налаштований, пропускаємо відправку');
             return;
         }
         
-        if (!TELEGRAM_CHAT_ID) {
-            console.log('⚠️ TELEGRAM_CHAT_ID не налаштований, пропускаємо відправку');
+        // Формуємо список Chat ID
+        let chatIds = [];
+        
+        if (multipleChatIds) {
+            // Новий формат: 679771495,123456789,987654321
+            chatIds = multipleChatIds.split(',').map(id => id.trim()).filter(id => id.length > 0);
+        } else if (singleChatId) {
+            // Старий формат: 679771495
+            chatIds = [singleChatId];
+        }
+        
+        if (chatIds.length === 0) {
+            console.log('⚠️ Жоден TELEGRAM_CHAT_ID не налаштований, пропускаємо відправку');
             return;
         }
 
-        console.log('🤖 Telegram налаштування знайдено, відправляємо повідомлення...');
-        console.log('   Bot Token:', TELEGRAM_BOT_TOKEN ? `${TELEGRAM_BOT_TOKEN.substring(0, 10)}...` : 'НЕ ЗНАЙДЕНО');
-        console.log('   Chat ID:', TELEGRAM_CHAT_ID);
+        console.log('🤖 Відправляємо повідомлення в чати:', chatIds);
 
         const message = `✅ Успішна оплата на адресу мерчанта ${MERCHANT_ACCOUNT}
 
@@ -245,66 +256,165 @@ async function sendTelegramNotification(email, name, courseName, orderId, price)
 
         const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
         
-        console.log('🌐 Відправляємо запит на URL:', url);
-        console.log('📝 Повідомлення:', message);
+        // 📤 Відправляємо в усі чати
+        let successCount = 0;
+        let errorCount = 0;
+        
+        for (const chatId of chatIds) {
+            try {
+                console.log(`📤 Відправляємо в чат: ${chatId}`);
+                
+                const response = await axios.post(url, {
+                    chat_id: chatId,
+                    text: message,
+                    parse_mode: 'HTML'
+                }, {
+                    timeout: 10000,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                console.log(`✅ Повідомлення відправлено в чат ${chatId} (message_id: ${response.data.result.message_id})`);
+                successCount++;
+                
+            } catch (error) {
+                console.error(`❌ Помилка відправки в чат ${chatId}:`);
+                console.error(`   Помилка: ${error.response?.data?.description || error.message}`);
+                
+                if (error.response?.status === 403) {
+                    console.error(`   💡 Користувач ${chatId} заблокував бота або бот не має доступу`);
+                } else if (error.response?.status === 400) {
+                    console.error(`   💡 Неправильний Chat ID: ${chatId}`);
+                }
+                
+                errorCount++;
+            }
+        }
+        
+        console.log(`📊 Результат Telegram розсилки: ${successCount} успішно, ${errorCount} помилок з ${chatIds.length} спроб`);
+        
+        if (successCount > 0) {
+            console.log('✅ Telegram розсилка частково або повністю успішна');
+        } else {
+            console.error('❌ Жодне Telegram повідомлення не було відправлено');
+        }
+        
+    } catch (error) {
+        console.error('❌ Критична помилка в sendTelegramNotification:', error.message);
+        console.error('Stack trace:', error.stack);
+    }
+}
 
-        const response = await axios.post(url, {
-            chat_id: TELEGRAM_CHAT_ID,
-            text: message,
-            parse_mode: 'HTML'
-        }, {
-            timeout: 10000, // 10 секунд timeout
-            headers: {
-                'Content-Type': 'application/json'
+// 📤 Додайте тестовий маршрут для перевірки розсилки
+app.get('/test-telegram-all', async (req, res) => {
+    try {
+        await sendTelegramNotification(
+            'test@example.com',
+            'Тестовий користувач', 
+            'Тестовий курс - розсилка всім',
+            'ORDER-TEST-ALL-' + Date.now(),
+            999
+        );
+        res.send('✅ Тестова розсилка відправлена! Перевірте логи сервера та всі Telegram чати.');
+    } catch (err) {
+        res.send('❌ Помилка: ' + err.message);
+    }
+});
+
+app.get('/get-chat-ids', async (req, res) => {
+    try {
+        const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+        if (!TELEGRAM_BOT_TOKEN) {
+            return res.send('❌ TELEGRAM_BOT_TOKEN не налаштований');
+        }
+        
+        const response = await axios.get(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates`);
+        const updates = response.data.result;
+        
+        if (!updates || updates.length === 0) {
+            return res.send(`
+                <h2>📱 Як отримати Chat ID:</h2>
+                <ol>
+                    <li>Відкрийте Telegram</li>
+                    <li>Знайдіть вашого бота (він повинен мати username)</li>
+                    <li>Напишіть боту будь-яке повідомлення, наприклад "/start"</li>
+                    <li>Оновіть цю сторінку</li>
+                </ol>
+                <p><a href="/get-chat-ids">🔄 Оновити</a></p>
+            `);
+        }
+        
+        // Збираємо унікальні чати
+        const chats = {};
+        updates.forEach(update => {
+            if (update.message && update.message.chat) {
+                const chat = update.message.chat;
+                const chatId = chat.id.toString();
+                
+                chats[chatId] = {
+                    chatId: chatId,
+                    name: [chat.first_name, chat.last_name].filter(Boolean).join(' ') || chat.username || 'Невідомий',
+                    username: chat.username ? '@' + chat.username : null,
+                    lastMessage: update.message.text || '',
+                    date: new Date(update.message.date * 1000).toLocaleString('uk-UA')
+                };
             }
         });
         
-        console.log('✅ Telegram повідомлення відправлено успішно');
-        console.log('📊 Відповідь API:', response.data);
+        const currentChatIds = process.env.TELEGRAM_CHAT_IDS ? 
+            process.env.TELEGRAM_CHAT_IDS.split(',').map(id => id.trim()) : 
+            [process.env.TELEGRAM_CHAT_ID].filter(Boolean);
+        
+        let html = `
+            <h2>📱 Всі користувачі, які писали боту:</h2>
+            <table border="1" style="border-collapse: collapse; width: 100%;">
+                <tr style="background: #f0f0f0;">
+                    <th>Chat ID</th>
+                    <th>Ім'я</th>
+                    <th>Username</th>
+                    <th>Останнє повідомлення</th>
+                    <th>Дата</th>
+                    <th>Статус</th>
+                </tr>
+        `;
+        
+        Object.values(chats).forEach(chat => {
+            const isActive = currentChatIds.includes(chat.chatId);
+            const statusColor = isActive ? '#28a745' : '#6c757d';
+            const statusText = isActive ? '✅ Активний' : '➕ Доступний для додавання';
+            
+            html += `
+                <tr>
+                    <td><strong>${chat.chatId}</strong></td>
+                    <td>${chat.name}</td>
+                    <td>${chat.username || '—'}</td>
+                    <td>${chat.lastMessage.substring(0, 30)}${chat.lastMessage.length > 30 ? '...' : ''}</td>
+                    <td>${chat.date}</td>
+                    <td style="color: ${statusColor};">${statusText}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+            </table>
+            <hr>
+            <h3>⚙️ Поточні налаштування:</h3>
+            <p><strong>Активні Chat IDs:</strong> ${currentChatIds.join(', ') || 'Немає'}</p>
+            
+            <h3>📝 Як додати нового користувача:</h3>
+            <ol>
+                <li>Скопіюйте <strong>Chat ID</strong> потрібного користувача з таблиці</li>
+                <li>Відкрийте файл <code>.env</code></li>
+                <li>Змініть рядок на: <code>TELEGRAM_CHAT_IDS=${currentChatIds.join(',')},НОВИЙ_CHAT_ID</code></li>
+                <li>Перезапустіть сервер</li>
+            </ol>
+            
+            <p><a href="/get-chat-ids">🔄 Оновити</a> | <a href="/test-telegram-all">📤 Тестова розсилка</a></p>
+        `;
+        
+        res.send(html);
         
     } catch (error) {
-        console.error('❌ Помилка відправки Telegram повідомлення:');
-        
-        if (error.response) {
-            // Помилка від Telegram API
-            console.error('   HTTP Status:', error.response.status);
-            console.error('   Response Data:', JSON.stringify(error.response.data, null, 2));
-            
-            if (error.response.status === 400) {
-                console.error('   💡 Можливі причини помилки 400:');
-                console.error('      - Неправильний Chat ID');
-                console.error('      - Бот не доданий до чату');
-                console.error('      - Неправильний формат повідомлення');
-            } else if (error.response.status === 401) {
-                console.error('   💡 Помилка 401: Неправильний Bot Token');
-            } else if (error.response.status === 403) {
-                console.error('   💡 Помилка 403: Бот заблокований користувачем або не має доступу до чату');
-            }
-        } else if (error.request) {
-            // Мережева помилка
-            console.error('   🌐 Мережева помилка:', error.message);
-            console.error('   💡 Перевірте інтернет з\'єднання та доступність api.telegram.org');
-        } else {
-            // Інша помилка
-            console.error('   ❓ Невідома помилка:', error.message);
-        }
-        
-        console.error('   Stack trace:', error.stack);
-    }
-}
-// 🔹 Тестовий маршрут для перевірки Telegram без оплати
-app.get('/test-telegram', async (req, res) => {
-    try {
-        await sendTelegramNotification(
-            'test@example.com',  // email
-            'Тестовий користувач', // name
-            'Тестовий курс',      // courseName
-            'ORDER-TEST',         // orderId
-            123                   // price
-        );
-        res.send('✅ Тестове повідомлення відправлено у Telegram');
-    } catch (err) {
-        res.send('❌ Помилка: ' + (err.response?.data || err.message));
+        res.send('❌ Помилка: ' + error.message);
     }
 });
 
