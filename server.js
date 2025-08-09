@@ -226,15 +226,7 @@ async function sendTelegramNotification(email, name, courseName, orderId, price)
         }
         
         // Формуємо список Chat ID
-        let chatIds = [];
-        
-        if (multipleChatIds) {
-            // Новий формат: 679771495,123456789,987654321
-            chatIds = multipleChatIds.split(',').map(id => id.trim()).filter(id => id.length > 0);
-        } else if (singleChatId) {
-            // Старий формат: 679771495
-            chatIds = [singleChatId];
-        }
+        const chatIds = singleChatId ? [singleChatId] : [];
         
         if (chatIds.length === 0) {
             console.log('⚠️ Жоден TELEGRAM_CHAT_ID не налаштований, пропускаємо відправку');
@@ -305,16 +297,18 @@ async function sendTelegramNotification(email, name, courseName, orderId, price)
 }
 
 // 📤 Додайте тестовий маршрут для перевірки розсилки
-app.get('/test-telegram-all', async (req, res) => {
+app.get('/test-telegram-one', async (req, res) => {
     try {
         await sendTelegramNotification(
             'test@example.com',
             'Тестовий користувач', 
-            'Тестовий курс - розсилка всім',
-            'ORDER-TEST-ALL-' + Date.now(),
-            999
+            'Тестовий курс - один користувач',
+            'ORDER-TEST-ONE-' + Date.now(),
+            999,
+            process.env.TELEGRAM_CHAT_ID
         );
-        res.send('✅ Тестова розсилка відправлена! Перевірте логи сервера та всі Telegram чати.');
+
+        res.send('✅ Повідомлення відправлено одному користувачу!');
     } catch (err) {
         res.send('❌ Помилка: ' + err.message);
     }
