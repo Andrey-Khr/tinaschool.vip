@@ -333,13 +333,15 @@ app.get('/stats', (req, res) => {
 
 // Створення платежу з валідацією
 // ✅ УНІВЕРСАЛЬНЕ РІШЕННЯ для callback WayForPay
-// ✅ УНІВЕРСАЛЬНЕ РІШЕННЯ для callback WayForPay
 app.post('/server-callback', upload.none(), async (req, res) => {
+    let paymentData = null; // ← Ініціалізуємо змінну
+    let orderReference = null; // ← Додаємо для використання в finally
+    
     try {
         console.log('📞 Callback отримано від WayForPay');
         console.log('📅 Час:', new Date().toISOString());
 
-        let paymentData;
+        // Парсинг даних
         if (Object.keys(req.body).length === 1 && typeof Object.keys(req.body)[0] === 'string') {
             try {
                 paymentData = JSON.parse(Object.keys(req.body)[0]);
@@ -355,7 +357,7 @@ app.post('/server-callback', upload.none(), async (req, res) => {
 
         const { 
             merchantAccount,
-            orderReference, 
+            orderReference: orderRef, // ← Змінюємо назву змінної тут
             amount,
             currency,
             authCode,
@@ -365,15 +367,16 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             merchantSignature 
         } = paymentData;
 
+        orderReference = orderRef; // ← Присвоюємо для використання в finally
+
         if (!orderReference || !transactionStatus || !merchantSignature) {
             console.warn('⚠️ Відсутні необхідні поля в callback-запиті.');
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
-        // 🎯 ГОЛОВНИЙ ФОКУС: Спробуємо ВСІ можливі комбінації підпису!
+        // Перевірка підпису (ваш існуючий код)
         console.log('🔍 Спробуємо різні комбінації полів для підпису...');
 
-        // Варіант 1: Повний список полів (згідно документації)
         const fullFields = [
             merchantAccount,
             orderReference, 
@@ -385,7 +388,6 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             reasonCode || ''
         ];
 
-        // Варіант 2: Тільки основні поля (часто використовується)
         const basicFields = [
             merchantAccount,
             orderReference,
@@ -394,7 +396,6 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             transactionStatus
         ];
 
-        // Варіант 3: З датою (іноді WayForPay додає дату)
         const fieldsWithDate = [
             merchantAccount,
             orderReference,
@@ -404,7 +405,6 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             paymentData.createdDate || ''
         ];
 
-        // Варіант 4: Без merchantAccount (деякі версії API)
         const withoutMerchant = [
             orderReference, 
             amount,
@@ -445,128 +445,136 @@ app.post('/server-callback', upload.none(), async (req, res) => {
             }
         }
 
-        // 🔍 Додаткова діагностика: спробуємо підпис з усіма доступними полями
-        if (!signatureValid) {
-            console.log('🔬 Додаткова діагностика - всі доступні поля:');
-            const allAvailableFields = Object.keys(paymentData)
-                .filter(key => key !== 'merchantSignature')
-                .map(key => paymentData[key]);
-            
-            const allFieldsString = allAvailableFields.map(field => String(field || '')).join(';');
-            const allFieldsSignature = crypto
-                .createHmac('md5', MERCHANT_SECRET_KEY)
-                .update(allFieldsString)
-                .digest('hex');
-            
-            console.log(`   Всі поля: ${allFieldsString}`);
-            console.log(`   Підпис: ${allFieldsSignature}`);
-            console.log(`   Збігається: ${allFieldsSignature === merchantSignature}`);
-
-            if (allFieldsSignature === merchantSignature) {
-                signatureValid = true;
-                validVariant = 'Всі доступні поля';
-            }
-        }
-
         if (signatureValid) {
             console.log(`✅ Підпис ВАЛІДНИЙ! Використано варіант: ${validVariant}`);
             
+            // 🔍 ДОДАТКОВА ДІАГНОСТИКА ФАЙЛУ ЗАМОВЛЕНЬ
+            console.log('🔍 Читаємо файл замовлень...');
             const allOrders = readOrders();
+            console.log('📊 Загальна кількість замовлень у файлі:', Object.keys(allOrders.orders).length);
+            console.log('🔍 Останні 5 замовлень:');
+            Object.keys(allOrders.orders)
+                .slice(-5)
+                .forEach(orderId => {
+                    const order = allOrders.orders[orderId];
+                    console.log(`   ${orderId}: ${order.status} (${order.createdAt})`);
+                });
+            
             const customerOrder = allOrders.orders[orderReference];
-
-            if (customerOrder && customerOrder.status !== 'paid') {
-                if (transactionStatus === 'Approved') {
-                    console.log('✅ Статус оплати підтверджено.');
-                    customerOrder.status = 'paid';
-                    customerOrder.paidAt = new Date().toISOString();
-                    customerOrder.wayforpayData = paymentData;
-                    writeOrders(allOrders);
-
-                    await sendPaymentConfirmationEmail(
-                        customerOrder.email, 
-                        customerOrder.name, 
-                        customerOrder.courseName, 
-                        orderReference
-                    );
-                    await sendAdminNotification(
-                        customerOrder.email, 
-                        customerOrder.name, 
-                        customerOrder.courseName, 
-                        orderReference, 
-                        customerOrder.price
-                    );
-                    await sendTelegramNotification(
-                        customerOrder.email,
-                        customerOrder.name,
-                        customerOrder.courseName,
-                        orderReference,
-                        customerOrder.price
-                    );
-                    
-                    metrics.successfulPayments++;
-                } else {
-                    console.log('❌ Статус оплати не підтверджено:', transactionStatus);
-                    metrics.failedPayments++;
-                }
-            } else if (customerOrder && customerOrder.status === 'paid') {
-                console.log('🔁 Замовлення вже було оплачено.');
-            } else {
+            
+            if (!customerOrder) {
                 console.error('❌ Замовлення не знайдено:', orderReference);
+                console.log('🔍 Можливі причини:');
+                console.log('   1. Замовлення було створено на іншому сервері');
+                console.log('   2. Файл orders.json був очищений або пошкоджений');
+                console.log('   3. Замовлення було видалене');
+                console.log('📋 Всі існуючі замовлення:');
+                Object.keys(allOrders.orders).forEach(orderId => {
+                    console.log(`   - ${orderId}`);
+                });
+                
+                // Навіть якщо замовлення не знайдено, логуємо статус транзакції
+                if (transactionStatus === 'Approved') {
+                    console.log('💰 Транзакція APPROVED, але замовлення не знайдено!');
+                    console.log('📧 Відправляємо сповіщення адміністратору про проблему...');
+                    
+                    try {
+                        await sendAdminNotification(
+                            'unknown@unknown.com',
+                            'Невідомий клієнт',
+                            'ПОМИЛКА: Замовлення не знайдено',
+                            orderReference,
+                            amount
+                        );
+                    } catch (emailError) {
+                        console.error('❌ Помилка відправки email про проблему:', emailError);
+                    }
+                } else {
+                    console.log(`📊 Статус транзакції: ${transactionStatus} (${paymentData.reason || 'Без причини'})`);
+                }
+            } else {
+                console.log('✅ Замовлення знайдено:', customerOrder);
+                
+                if (customerOrder.status !== 'paid') {
+                    if (transactionStatus === 'Approved') {
+                        console.log('✅ Статус оплати підтверджено - обробляємо...');
+                        customerOrder.status = 'paid';
+                        customerOrder.paidAt = new Date().toISOString();
+                        customerOrder.wayforpayData = paymentData;
+                        writeOrders(allOrders);
+
+                        console.log('📧 Відправляємо emails та Telegram...');
+                        await Promise.all([
+                            sendPaymentConfirmationEmail(
+                                customerOrder.email, 
+                                customerOrder.name, 
+                                customerOrder.courseName, 
+                                orderReference
+                            ),
+                            sendAdminNotification(
+                                customerOrder.email, 
+                                customerOrder.name, 
+                                customerOrder.courseName, 
+                                orderReference, 
+                                customerOrder.price
+                            ),
+                            sendTelegramNotification(
+                                customerOrder.email,
+                                customerOrder.name,
+                                customerOrder.courseName,
+                                orderReference,
+                                customerOrder.price
+                            )
+                        ]);
+                        
+                        metrics.successfulPayments++;
+                        console.log('🎉 Успішна оплата оброблена!');
+                    } else {
+                        console.log(`❌ Статус оплати: ${transactionStatus} (${paymentData.reason || 'Без причини'})`);
+                        
+                        // Оновлюємо статус на failed тільки якщо це остаточна помилка
+                        if (['Declined', 'Expired', 'Failed'].includes(transactionStatus)) {
+                            customerOrder.status = 'failed';
+                            customerOrder.failedAt = new Date().toISOString();
+                            customerOrder.failureReason = paymentData.reason;
+                            writeOrders(allOrders);
+                        }
+                        
+                        metrics.failedPayments++;
+                    }
+                } else {
+                    console.log('🔁 Замовлення вже було оплачено.');
+                }
             }
         } else {
             console.error('❌ ЖОДЕН підпис не підійшов!');
-            console.error('🔧 Можливі причини:');
-            console.error('   1. Неправильний SECRET KEY');
-            console.error('   2. WayForPay змінили формат callback');
-            console.error('   3. Кодування символів (UTF-8)');
-            console.error('📞 Рекомендується звернутись до техпідтримки WayForPay');
             
-            // ⚠️ УВАГА: Навіть якщо підпис не валідний, ми все одно обробляємо успішну оплату
-            // Це тимчасовий workaround, поки не з'ясуємо точний формат
+            // Навіть з неправильним підписом, якщо це Approved транзакція
             if (transactionStatus === 'Approved') {
-                console.log('⚠️ УВАГА: Обробляємо оплату попри неправильний підпис (тимчасово)');
+                console.log('⚠️ УВАГА: Approved транзакція з неправильним підписом');
+                console.log('📧 Відправляємо попередження адміністратору...');
                 
-                const allOrders = readOrders();
-                const customerOrder = allOrders.orders[orderReference];
-
-                if (customerOrder && customerOrder.status !== 'paid') {
-                    customerOrder.status = 'paid';
-                    customerOrder.paidAt = new Date().toISOString();
-                    customerOrder.wayforpayData = paymentData;
-                    customerOrder.signatureWarning = 'Підпис не валідний, але оплата оброблена';
-                    writeOrders(allOrders);
-
-                    await sendPaymentConfirmationEmail(
-                        customerOrder.email, 
-                        customerOrder.name, 
-                        customerOrder.courseName, 
-                        orderReference
-                    );
+                try {
                     await sendAdminNotification(
-                        customerOrder.email, 
-                        customerOrder.name, 
-                        customerOrder.courseName, 
-                        orderReference, 
-                        customerOrder.price
-                    );
-                     await sendTelegramNotification(
-                        customerOrder.email,
-                        customerOrder.name,
-                        customerOrder.courseName,
+                        'security@tinaschool.com',
+                        'SECURITY WARNING',
+                        'Approved платіж з неправильним підписом',
                         orderReference,
-                        customerOrder.price
+                        amount
                     );
-                    metrics.successfulPayments++;
+                } catch (securityEmailError) {
+                    console.error('❌ Помилка відправки security email:', securityEmailError);
                 }
             }
         }
 
     } catch (error) {
         console.error('❌ Критична помилка обробки callback:', error);
+        console.error('Stack trace:', error.stack);
     } finally {
-        // ✅ Завжди відповідаємо позитивно, щоб WayForPay не повторював запити
+        // ✅ Завжди відповідаємо позитивно
         const responseTime = Math.floor(Date.now() / 1000);
-        const orderRef = (paymentData && paymentData.orderReference) || 'unknown';
+        const orderRef = orderReference || 'unknown'; // ← Використовуємо безпечне значення
         const responseStr = [orderRef, 'accept', responseTime].join(';');
         const signature = crypto.createHmac('md5', MERCHANT_SECRET_KEY).update(responseStr).digest('hex');
         
@@ -787,6 +795,88 @@ process.on('SIGINT', () => {
     console.log('🔄 Отримано сигнал SIGINT, завершення роботи...');
     transporter.close();
     process.exit(0);
+});
+// 🔍 Додайте цей маршрут для діагностики файлу замовлень
+app.get('/debug-orders', (req, res) => {
+    try {
+        const { order_id } = req.query;
+        const allOrders = readOrders();
+        
+        if (order_id) {
+            // Шукаємо конкретне замовлення
+            const order = allOrders.orders[order_id];
+            return res.json({
+                found: !!order,
+                orderId: order_id,
+                order: order || null,
+                message: order ? 'Замовлення знайдено' : 'Замовлення не знайдено'
+            });
+        }
+        
+        // Показуємо всі замовлення
+        const ordersList = Object.entries(allOrders.orders)
+            .sort(([,a], [,b]) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 20) // Останні 20
+            .map(([orderId, order]) => ({
+                orderId,
+                status: order.status,
+                email: order.email,
+                name: order.name,
+                courseName: order.courseName,
+                price: order.price,
+                createdAt: order.createdAt,
+                paidAt: order.paidAt
+            }));
+        
+        res.json({
+            total: Object.keys(allOrders.orders).length,
+            latest20: ordersList,
+            filePath: ORDERS_FILE_PATH,
+            fileExists: require('fs').existsSync(ORDERS_FILE_PATH)
+        });
+        
+    } catch (error) {
+        res.status(500).json({
+            error: 'Помилка читання замовлень',
+            details: error.message
+        });
+    }
+});
+
+// 🔍 Маршрут для пошуку замовлення за email
+app.get('/find-orders-by-email', (req, res) => {
+    try {
+        const { email } = req.query;
+        
+        if (!email) {
+            return res.status(400).json({ error: 'Email параметр обов\'язковий' });
+        }
+        
+        const allOrders = readOrders();
+        const userOrders = Object.entries(allOrders.orders)
+            .filter(([orderId, order]) => order.email === email)
+            .sort(([,a], [,b]) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .map(([orderId, order]) => ({
+                orderId,
+                status: order.status,
+                courseName: order.courseName,
+                price: order.price,
+                createdAt: order.createdAt,
+                paidAt: order.paidAt
+            }));
+        
+        res.json({
+            email,
+            ordersCount: userOrders.length,
+            orders: userOrders
+        });
+        
+    } catch (error) {
+        res.status(500).json({
+            error: 'Помилка пошуку замовлень',
+            details: error.message
+        });
+    }
 });
 
 // Запуск сервера
