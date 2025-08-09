@@ -6,6 +6,7 @@ const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 require('dotenv').config();
+const axios = require('axios');
 
 const app = express();
 app.use(express.json());
@@ -49,7 +50,10 @@ const requiredEnvVars = {
     MERCHANT_DOMAIN_NAME: process.env.MERCHANT_DOMAIN_NAME,
     EMAIL_HOST: process.env.EMAIL_HOST,
     EMAIL_USER: process.env.EMAIL_USER,
-    EMAIL_PASS: process.env.EMAIL_PASS
+    EMAIL_PASS: process.env.EMAIL_PASS,
+        // Telegram є опціональним
+    TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
+    TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID
 };
 
 const missingVars = Object.entries(requiredEnvVars)
@@ -150,9 +154,6 @@ async function sendPaymentConfirmationEmail(email, name, courseName, orderId) {
                                     🤖 Перейти в телеграм бот
                                 </a>
                             </div>
-                            <p style="color: #155724; font-size: 14px; text-align: center; background-color: #d4edda; padding: 10px; border-radius: 5px;">
-                                💡 В боті вкажіть номер замовлення: <strong>${orderId}</strong>
-                            </p>
                         </div>
                         <hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0;">
                         <div style="text-align: center; color: #6c757d; font-size: 14px;">
@@ -206,6 +207,106 @@ async function sendAdminNotification(email, name, courseName, orderId, price) {
         console.error('❌ Помилка відправки сповіщення адміністратора:', error.message);
     }
 }
+// Виправлена функція для відправки повідомлення в Telegram
+async function sendTelegramNotification(email, name, courseName, orderId, price) {
+    console.log('📨 Викликано sendTelegramNotification з даними:', {
+        email, name, courseName, orderId, price
+    });
+
+    try {
+        const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+        const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+        
+        // Детальна перевірка наявності змінних
+        if (!TELEGRAM_BOT_TOKEN) {
+            console.log('⚠️ TELEGRAM_BOT_TOKEN не налаштований, пропускаємо відправку');
+            return;
+        }
+        
+        if (!TELEGRAM_CHAT_ID) {
+            console.log('⚠️ TELEGRAM_CHAT_ID не налаштований, пропускаємо відправку');
+            return;
+        }
+
+        console.log('🤖 Telegram налаштування знайдено, відправляємо повідомлення...');
+        console.log('   Bot Token:', TELEGRAM_BOT_TOKEN ? `${TELEGRAM_BOT_TOKEN.substring(0, 10)}...` : 'НЕ ЗНАЙДЕНО');
+        console.log('   Chat ID:', TELEGRAM_CHAT_ID);
+
+        const message = `✅ Успішна оплата на адресу мерчанта ${MERCHANT_ACCOUNT}
+
+Дані платежу:
+  - Призначення: Payment for - ${courseName} - (${price}) UAH 
+  - Дата: ${new Date().toLocaleString('uk-UA')} 
+  - Сума: ${price} UAH
+  - Id платежу: ${orderId}
+  - Метод оплати: картка
+  - ПІБ клієнта: ${name}
+  - Email: ${email}`;
+
+        const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+        
+        console.log('🌐 Відправляємо запит на URL:', url);
+        console.log('📝 Повідомлення:', message);
+
+        const response = await axios.post(url, {
+            chat_id: TELEGRAM_CHAT_ID,
+            text: message,
+            parse_mode: 'HTML'
+        }, {
+            timeout: 10000, // 10 секунд timeout
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        console.log('✅ Telegram повідомлення відправлено успішно');
+        console.log('📊 Відповідь API:', response.data);
+        
+    } catch (error) {
+        console.error('❌ Помилка відправки Telegram повідомлення:');
+        
+        if (error.response) {
+            // Помилка від Telegram API
+            console.error('   HTTP Status:', error.response.status);
+            console.error('   Response Data:', JSON.stringify(error.response.data, null, 2));
+            
+            if (error.response.status === 400) {
+                console.error('   💡 Можливі причини помилки 400:');
+                console.error('      - Неправильний Chat ID');
+                console.error('      - Бот не доданий до чату');
+                console.error('      - Неправильний формат повідомлення');
+            } else if (error.response.status === 401) {
+                console.error('   💡 Помилка 401: Неправильний Bot Token');
+            } else if (error.response.status === 403) {
+                console.error('   💡 Помилка 403: Бот заблокований користувачем або не має доступу до чату');
+            }
+        } else if (error.request) {
+            // Мережева помилка
+            console.error('   🌐 Мережева помилка:', error.message);
+            console.error('   💡 Перевірте інтернет з\'єднання та доступність api.telegram.org');
+        } else {
+            // Інша помилка
+            console.error('   ❓ Невідома помилка:', error.message);
+        }
+        
+        console.error('   Stack trace:', error.stack);
+    }
+}
+// 🔹 Тестовий маршрут для перевірки Telegram без оплати
+app.get('/test-telegram', async (req, res) => {
+    try {
+        await sendTelegramNotification(
+            'test@example.com',  // email
+            'Тестовий користувач', // name
+            'Тестовий курс',      // courseName
+            'ORDER-TEST',         // orderId
+            123                   // price
+        );
+        res.send('✅ Тестове повідомлення відправлено у Telegram');
+    } catch (err) {
+        res.send('❌ Помилка: ' + (err.response?.data || err.message));
+    }
+});
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
@@ -394,6 +495,14 @@ app.post('/server-callback', upload.none(), async (req, res) => {
                         orderReference, 
                         customerOrder.price
                     );
+                    await sendTelegramNotification(
+                        customerOrder.email,
+                        customerOrder.name,
+                        customerOrder.courseName,
+                        orderReference,
+                        customerOrder.price
+                    );
+                    
                     metrics.successfulPayments++;
                 } else {
                     console.log('❌ Статус оплати не підтверджено:', transactionStatus);
@@ -438,6 +547,13 @@ app.post('/server-callback', upload.none(), async (req, res) => {
                         customerOrder.name, 
                         customerOrder.courseName, 
                         orderReference, 
+                        customerOrder.price
+                    );
+                     await sendTelegramNotification(
+                        customerOrder.email,
+                        customerOrder.name,
+                        customerOrder.courseName,
+                        orderReference,
                         customerOrder.price
                     );
                     metrics.successfulPayments++;
