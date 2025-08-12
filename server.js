@@ -717,10 +717,10 @@ app.post('/create-payment', (req, res) => {
             let courseName;
 
             if (course === 'solo') {
-                price = 497; // Ціна для тарифу "Самостійний"
+                price = 700; // Ціна для тарифу "Самостійний"
                 courseName = 'Тариф: САМОСТІЙНИЙ';
             } else if (course === 'support') {
-                price = 777; // Ціна для тарифу "З підтримкою"
+                price = 997; // Ціна для тарифу "З підтримкою"
                 courseName = 'Тариф: З ПІДТРИМКОЮ';
             } else {
                 return res.status(400).json({ error: 'Некоректний тариф' });
