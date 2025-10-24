@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Tina`s School</title>
+    <title>Tina's School</title>
     <link rel="stylesheet" href="/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -10,11 +10,10 @@
 
     <header>
         <div class="logo-wrapper">
-        <img src="/images/logo.png" alt="Логотип" class="logo-image">
-        
-        <div class="logo">Tina's School</div>
-    </div>
-    <a href="#pricing" class="cta-button">Почати навчання</a>
+            <img src="/images/logo.png" alt="Логотип" class="logo-image">
+            <div class="logo">Tina's School</div>
+        </div>
+        <a href="#pricing" class="cta-button">Почати навчання</a>
     </header>
 
     <main>
@@ -37,12 +36,11 @@
                 <p>Для друку або роботи онлайн — все структуровано й зрозуміло.</p>
             </div>
             <div class="feature">
-                <h3>Telegram-чат підтримки</h3>
-                <p>Доступ до чату для питань і підтримки протягом усього навчання.</p>
+                <h3>Доступ 4 місяці</h3>
+                <p>Навчайся у зручному темпі без обмежень.</p>
             </div>
         </div>
         
-        <!-- Детальні теми уроків -->
         <div class="course-lessons">
             <h3>Програма курсу:</h3>
             <div class="lessons-grid">
@@ -99,11 +97,71 @@
         </div>
     </section>
 
-<section class="course-start-note">
-  <p>
-    Старт — 18 серпня<br>
-  </p>
+    <section id="video-demo" class="video-demo-section">
+        <h2>📹 Приклад відео уроку</h2>
+        <p>Подивіться, як виглядає навчання в курсі</p>
+        <div class="video-wrapper" style="padding-bottom: 0; height: auto;"> <video controls style="width: 100%; height: auto; border-radius: 15px; display: block;" 
+                   title="Приклад уроку румунської мови" 
+                   src="/video/pryklad.mp4">
+                Ваш браузер не підтримує тег video.
+            </video>
+        </div>
+    </section>
+
+    <section id="interactive-exercises" class="interactive-exercises-section">
+        <h2>🎮 Відео огляд інтерактивних вправ</h2>
+        <p class="interactive-note">Подивіться, як виглядає наш онлайн-тренажер, що допомагає закріпити граматику та лексику в ігровій формі.</p>
+        
+        <div class="interactive-demo-wrapper" style="padding-bottom: 0; height: auto;">
+             <video controls style="width: 100%; height: auto; border-radius: 15px; display: block;" 
+                   title="Огляд інтерактивних вправ" 
+                   src="/video/priklad_game.mp4">
+                Ваш браузер не підтримує тег video.
+            </video>
+        </div>
+    </section>
+
+<section id="workbooks" class="resource-section">
+    <h2>📚 Приклади сторінок із зошитів</h2>
+    <p>Кожен урок супроводжується детальним зошитом з вправами. Натисніть на зображення, щоб збільшити.</p>
+    <div class="resource-grid">
+        
+        <div class="resource-card">
+            <a href="/images/workbooks/1.png" target="_blank" class="image-link">
+                <div class="image-frame">
+                    <img src="/images/workbooks/1.png" alt="Обкладинка зошита 'Adjective'">
+                </div>
+            </a>
+            <h3>Обкладинка (Урок 7)</h3>
+            <p>Яскрава та тематична обкладинка для зошита "Прикметники".</p>
+        </div>
+        
+        <div class="resource-card">
+            <a href="/images/workbooks/5.png" target="_blank" class="image-link">
+                <div class="image-frame">
+                    <img src="/images/workbooks/5.png" alt="Приклад вправ з прикметниками">
+                </div>
+            </a>
+            <h3>Сторінка з граматикою</h3>
+            <p>Таблиця з відмінюванням прикметників та вправи на заповнення пропусків.</p>
+        </div>
+        
+        <div class="resource-card">
+            <a href="/images/workbooks/3.png" target="_blank" class="image-link">
+                <div class="image-frame">
+                    <img src="/images/workbooks/3.png" alt="Приклад діалогу в зошиті">
+                </div>
+            </a>
+            <h3>Інтерактивні завдання</h3>
+            <p>Вправи на використання "Cât?" та заповнення діалогу у замку Дракули.</p>
+        </div>
+        
+    </div>
 </section>
+
+    <section class="course-start-note">
+      <p>Старт — 18 серпня</p>
+    </section>
 
 
     <section class="about-course">
@@ -147,83 +205,58 @@
     </section>
 
     <section id="pricing">
-        <h2>Обери свій формат</h2>
-        <p>Кожен тариф — це повний доступ до матеріалів та бонусів.</p>
+        <h2>Самостійний курс румунської мови</h2>
+        <p>Повний доступ до всіх матеріалів на 4 місяці</p>
 
         <div class="course-grid">
 
-            <!-- Самостійний тариф -->
             <div class="pricing-box">
-            <div class="tariff-header">Тариф: <span class="tag-solo">САМОСТІЙНИЙ</span></div>
-            <ul class="course-details">
-                <li>7 відеоуроків по 15–30 хв</li>
-                <li>Доступ до матеріалів 4 місяці</li>
-                <li>PDF-зошити для кожного уроку</li>
-                <li class="cross">Telegram-чат з куратором</li>
-            </ul>
-            <div class="price-wrapper">
-                <p class="price">700 грн</p>
-            </div>
-            <form action="/create-payment" method="POST">
-                <input type="hidden" name="course" value="solo">
-                <label for="name1">Ім'я</label>
-                <input type="text" name="name" id="name1" required>
-                <label for="email1">Email</label>
-                <input type="email" name="email" id="email1" required>
-                <button type="submit">ПРИДБАТИ КУРС</button>
-            </form>
+                <div class="tariff-header">Тариф: <span class="tag-solo">САМОСТІЙНИЙ</span></div>
+                <ul class="course-details">
+                    <li>7 відеоуроків по 15–30 хв</li>
+                    <li>Доступ до матеріалів 4 місяці</li>
+                    <li>PDF-зошити для кожного уроку</li>
+                    <li>Всі матеріали на Google Drive</li>
+                </ul>
+                <div class="price-wrapper">
+                    <p class="price">700 грн</p>
+                </div>
+                <form action="/create-payment" method="POST">
+                    <input type="hidden" name="course" value="solo">
+                    <label for="name1">Ім'я</label>
+                    <input type="text" name="name" id="name1" required>
+                    <label for="email1">Email</label>
+                    <input type="email" name="email" id="email1" required>
+                    <button type="submit">ПРИДБАТИ КУРС</button>
+                </form>
                  <p class="payment-note">
                     Натискаючи <strong>«Придбати курс»</strong>, ви погоджуєтесь з 
                     <a href="/docx/publ.dohovir.pdf" target="_blank">умовами публічного договору-оферти</a>.
-            </p>
-            </div>
-
-            <!-- Тариф з підтримкою -->
-            <div class="pricing-box">
-            <div class="tariff-header">Тариф: <span class="tag-support">З ПІДТРИМКОЮ</span></div>
-            <ul class="course-details">
-                <li>7 відеоуроків по 15–30 хв</li>
-                <li>Доступ до матеріалів до 6 місяців </li>
-                <li>PDF-зошити для кожного уроку</li>
-                <li>Telegram-чат з куратором</li>
-            </ul>
-            <div class="price-wrapper">
-                <p class="price">997 грн</p>
-            </div>
-            <form action="/create-payment" method="POST">
-                <input type="hidden" name="course" value="support">
-                <label for="name2">Ім'я</label>
-                <input type="text" name="name" id="name2" required>
-                <label for="email2">Email</label>
-                <input type="email" name="email" id="email2" required>
-                <button type="submit">ПРИДБАТИ КУРС</button>
-            </form>
-            <p class="payment-note">
-                Натискаючи <strong>«Придбати курс»</strong>, ви погоджуєтесь з 
-                <a href="/docx/publ.dohovir.pdf" target="_blank">умовами публічного договору-оферти</a>.
-            </p>
+                
+                    <a href="/docx/Polityka_konfidentsiinosti.pdf" target="_blank">Політикою конфіденційності</a>.
+                </p>
             </div>
 
         </div>
     </section>
 
-<section class="about-author">
-  <h2>Про авторку курсу</h2>
-  <div class="author-flex-row">
-    
-    <p>
-      <img src="/images/author.jpg" alt="Тіна Пілат" class="inline-author-photo">
-      <strong>Тіна Пілат</strong> — викладачка румунської мови з багаторічним досвідом.
-      Її головна мета — не просто навчити, а показати:
-      <strong>румунська може бути легкою, зрозумілою й навіть приємною.</strong>
-    </p>
+    <section class="about-author">
+      <h2>Про авторку курсу</h2>
+      <div class="author-flex-row">
+        
+        <p>
+          <img src="/images/author.jpg" alt="Тіна Пілат" class="inline-author-photo">
+          <strong>Тіна Пілат</strong> — викладачка румунської мови з багаторічним досвідом.
+          Її головна мета — не просто навчити, а показати:
+          <strong>румунська може бути легкою, зрозумілою й навіть приємною.</strong>
+        </p>
 
-    <img src="/images/romana.jpg" alt="Тіна Пілат" class="author-side-photo">
+        <img src="/images/romana.jpg" alt="Тіна Пілат" class="author-side-photo">
 
-  </div>
-</section>
+      </div>
+    </section>
 
-<footer>
+    <footer>
     <p>ФОП Пілат В.Л<br>м. Івано-Франківськ, Україна</p>
     <div>
         <a href="tel:+380666224097">+380 66 622 40 97 (Telegram)</a><br>
@@ -232,9 +265,15 @@
     <div>
         <a href="https://www.instagram.com/tinas_school/">Instagram: @tinas_school</a>
     </div>
+
+    <div class="footer-legal">
+        <a href="/docx/publ.dohovir.pdf" target="_blank">Публічний договір (оферта)</a>
+        <span>|</span>
+        <a href="/docx/Polityka_konfidentsiinosti.pdf" target="_blank">Політика конфіденційності</a>
+    </div>
+
     <p>&copy; 2025 Începe româna cu Tina. Всі права захищено.</p>
 </footer>
-
 
 </body>
 </html>

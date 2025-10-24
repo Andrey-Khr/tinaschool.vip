@@ -127,7 +127,8 @@ function isValidEmail(email) {
 // Функція для відправки email клієнту
 async function sendPaymentConfirmationEmail(email, name, courseName, orderId) {
     try {
-        const telegramBotUrl = process.env.TELEGRAM_BOT_URL || 'https://t.me/Tinas_cursuribot';
+        // ВИКОРИСТОВУЄМО GOOGLE DRIVE ДЛЯ ДОСТУПУ ДО КУРСУ
+        const googleDriveUrl = 'https://drive.google.com/drive/folders/1YJ7COy6SdH0lBk9PJ9ij3ywdN37udNtm?usp=sharing'; 
         
         const mailOptions = {
             from: EMAIL_FROM,
@@ -148,10 +149,10 @@ async function sendPaymentConfirmationEmail(email, name, courseName, orderId) {
                         </div>
                         <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
                             <h3 style="color: #155724; margin-top: 0;">🎯 Ваш курс активовано!</h3>
-                            <p style="color: #155724; margin-bottom: 15px;">Для отримання доступу до курсу та всіх матеріалів, перейдіть в наш телеграм бот:</p>
+                            <p style="color: #155724; margin-bottom: 15px;">Для отримання доступу до курсу та всіх матеріалів, перейдіть за посиланням на Google Диск:</p>
                             <div style="text-align: center; margin: 20px 0;">
-                                <a href="${telegramBotUrl}" style="background-color: #0088cc; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 16px;">
-                                    🤖 Перейти в телеграм бот
+                                <a href="${googleDriveUrl}" style="background-color: #34a853; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 16px;">
+                                    ☁️ Отримати доступ до курсу (Google Drive)
                                 </a>
                             </div>
                         </div>

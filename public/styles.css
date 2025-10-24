@@ -1254,6 +1254,210 @@ footer a:hover {
     width: auto;
     /* Ширина буде автоматичною для збереження пропорцій */
 }
+/* ============================================
+   СТИЛІ ДЛЯ СЕКЦІЙ "ПРИКЛАД ВІДЕО" ТА "ЗОШИТИ"
+   ============================================ */
+
+/* 1. Секція Приклад Відео */
+.video-demo-section {
+    padding: 100px 20px;
+    text-align: center;
+    background-color: #f7f7f7; /* Легкий фон */
+    position: relative;
+    overflow: hidden;
+}
+
+.video-demo-section h2 {
+    font-size: 48px;
+    background: linear-gradient(45deg, #e17055, #fd79a8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 60px;
+    font-weight: 800;
+}
+
+.video-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 15px;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    /* Створення адаптивного контейнера для відео */
+    padding-bottom: 56.25%; /* Співвідношення сторін 16:9 */
+    height: 0;
+    animation: fadeInScale 1s ease-out;
+}
+
+.video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+    border: none;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+
+/* 2. Секція Приклад Зошитів/Ресурсів */
+.resource-section {
+    padding: 100px 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8f2ff 100%);
+}
+
+.resource-section h2 {
+    font-size: 48px;
+    background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 60px;
+    font-weight: 800;
+}
+
+.resource-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+.resource-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    text-align: left; /* Вирівнюємо текст по лівому краю */
+
+    /* --- ГОЛОВНЕ ВИПРАВЛЕННЯ ДЛЯ "3 В РЯД" --- */
+    /* Базова ширина 300px, максимальна 380px */
+    flex: 1 1 300px; 
+    max-width: 380px; 
+}
+
+.resource-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.resource-card h3 {
+    font-size: 24px;
+    background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 15px;
+    font-weight: 700;
+    position: relative; 
+    z-index: 2;
+}
+
+.resource-card p {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 0; 
+    position: relative;
+    z-index: 2;
+}
+
+/* Рамка для зображення */
+.resource-card .image-frame {
+    width: 100%;
+    height: 220px; /* Фіксована висота для рамки */
+    border-radius: 10px;
+    overflow: hidden; 
+    background: #e8f2ff; /* Фон-заглушка */
+    border: 1px solid rgba(108, 92, 231, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    position: relative; 
+}
+
+.resource-card .image-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Обрізаємо, щоб заповнити рамку */
+    object-position: top; /* Показуємо верх сторінки */
+    transition: transform 0.3s ease;
+}
+
+/* Додаємо відступ знизу до посилання-рамки */
+.resource-card a.image-link {
+    margin-bottom: 20px;
+}
+/* ============================================
+   СТИЛІ ДЛЯ СЕКЦІЇ "ІНТЕРАКТИВНІ ВПРАВИ"
+   ============================================ */
+.interactive-exercises-section {
+    padding: 100px 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8f2ff 100%); /* Фон, схожий на resource-section */
+    position: relative;
+    overflow: hidden;
+}
+
+.interactive-exercises-section h2 {
+    font-size: 48px;
+    background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 60px;
+    font-weight: 800;
+}
+
+.interactive-demo-wrapper {
+    max-width: 500px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 15px;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+    /* Створення адаптивного контейнера (16:9 або 4:3, якщо це більше підходить для вправ) */
+    padding-bottom: 56.25%; /* 16:9 для стандартного відео */
+    height: 0;
+    animation: fadeInUp 1s ease-out;
+}
+
+/* Стилі для вбудованого відео/iframe - як у звичайному відео */
+.interactive-demo-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+    border: none;
+}
+
+.interactive-note {
+    margin-top: 30px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #6c5ce7;
+}
 
 /* Адаптивність */
 @media (max-width: 768px) {
@@ -1367,6 +1571,48 @@ footer a:hover {
     footer a {
         margin: 5px;
         display: block;
+    }
+    .video-demo-section, .resource-section {
+        padding: 60px 15px;
+    }
+    
+    .video-demo-section h2, .resource-section h2 {
+        font-size: 32px;
+        margin-bottom: 40px;
+    }
+
+    .resource-grid {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .resource-card {
+        max-width: 100%;
+        width: 100%;
+        padding: 25px;
+    }
+
+    .video-wrapper {
+        padding: 10px;
+        padding-bottom: 56.25%; 
+    }
+    interactive-exercises-section {
+        padding: 60px 15px;
+    }
+    
+    .interactive-exercises-section h2 {
+        font-size: 32px;
+        margin-bottom: 40px;
+    }
+
+    .interactive-demo-wrapper {
+        padding: 10px;
+        padding-bottom: 75%; /* Можна спробувати 4:3 для мобільних (75%) */
+    }
+
+    .interactive-note {
+        font-size: 16px;
     }
 }
 
