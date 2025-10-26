@@ -132,35 +132,51 @@ async function sendPaymentConfirmationEmail(email, name, courseName, orderId) {
         
         const mailOptions = {
             from: EMAIL_FROM,
-            to: email,
-            subject: 'Підтвердження оплати курсу - TinaSchool',
+            to: email, // Змінна 'email' залишається
+            subject: 'Доступ до курсу "Începe româna cu Tina"', // Тему листа також оновлено
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
                     <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                        <h2 style="color: #2c3e50; text-align: center; margin-bottom: 30px;">🎉 Дякуємо за покупку!</h2>
-                        <p style="font-size: 16px; line-height: 1.6;">Привіт, <strong>${name}</strong>!</p>
-                        <p style="font-size: 16px; line-height: 1.6;">Ми підтверджуємо успішну оплату курсу <strong>${courseName}</strong>.</p>
-                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #007bff;">
-                            <h3 style="color: #495057; margin-top: 0;">📋 Деталі замовлення:</h3>
-                            <p><strong>Номер замовлення:</strong> ${orderId}</p>
-                            <p><strong>Курс:</strong> ${courseName}</p>
-                            <p><strong>Статус:</strong> <span style="color: #28a745;">Оплачено ✅</span></p>
-                            <p><strong>Дата:</strong> ${new Date().toLocaleDateString('uk-UA')}</p>
+                        
+                        <h2 style="color: #2c3e50; text-align: center; margin-bottom: 20px;">Bună ziua!</h2>
+                        
+                        <p style="font-size: 16px; line-height: 1.6;">Дуже рада, що Ви долучилися до курсу "Începe româna cu Tina".</p>
+                        <p style="font-size: 16px; line-height: 1.6;">Сподіваюсь, що він стане корисним, цінним та дійсно допоможе Вам вивчити румунську мову 🫶</p>
+
+                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #007bff;">
+                            <p style="font-size: 16px; line-height: 1.6; margin-top: 0; margin-bottom: 10px;">
+                                <strong>Посилання на Google drive:</strong>
+                            </p>
+                            <a href="https://drive.google.com/drive/folders/1YJ7COy6SdH0lBk9PJ9ij3ywdN37udNtm?usp=sharing" style="color: #007bff; text-decoration: none; word-break: break-all;">
+                                https://drive.google.com/drive/folders/1YJ7COy6SdH0lBk9PJ9ij3ywdN37udNtm?usp=sharing
+                            </a>
                         </div>
-                        <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745;">
-                            <h3 style="color: #155724; margin-top: 0;">🎯 Ваш курс активовано!</h3>
-                            <p style="color: #155724; margin-bottom: 15px;">Для отримання доступу до курсу та всіх матеріалів, перейдіть за посиланням на Google Диск:</p>
-                            <div style="text-align: center; margin: 20px 0;">
-                                <a href="${googleDriveUrl}" style="background-color: #34a853; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 16px;">
-                                    ☁️ Отримати доступ до курсу (Google Drive)
-                                </a>
-                            </div>
+
+                        <ul style="font-size: 16px; line-height: 1.6; padding-left: 25px; margin-bottom: 25px;">
+                            <li>Спочатку відкрийте презентацію, в ній знайдете посилання на запис лекцій на YouTube.</li>
+                            <li>У папці Caiete ви зможете знайдете зошити із вправами до кожної лекції.</li>
+                            <li>У кожному зошиті є онлайн ігри. Потрібно просканувати QR- код за допомогою свого телефону.</li>
+                        </ul>
+
+                        <p style="font-size: 16px; line-height: 1.6;">Після проходження навчання буду вдячна за ваш відгук 🌷</p>
+
+                        <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #28a745;">
+                            <p style="font-size: 16px; line-height: 1.6; color: #155724; margin: 0;">
+                                Пишіть мені всі ваші відгуки на інстаграм сторінку <strong>@tinas_school</strong> та в подарунок 🎁 отримаєте чек-лист «250 іменинників румунської мови» із перекладом на українську та онлайн вправи для вивчення слів.
+                            </p>
                         </div>
+                        
+                        <p style="font-size: 16px; line-height: 1.6;">Чекатиму на Ваш фідбек!</p>
+                        <p style="font-size: 18px; line-height: 1.6; font-weight: bold; color: #2c3e50; text-align: left; margin-top: 20px;">
+                            Succes la învățare 🦋
+                        </p>
+
                         <hr style="border: none; border-top: 1px solid #dee2e6; margin: 30px 0;">
                         <div style="text-align: center; color: #6c757d; font-size: 14px;">
                             <p><strong>TinaSchool</strong></p>
                             <p>© 2025 TinaSchool. Всі права захищено.</p>
                         </div>
+
                     </div>
                 </div>
             `
